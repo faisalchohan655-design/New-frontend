@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Scrape from './components/Scrape';
 import Leads from './components/Leads';
+import Sales from './components/Sales';
 import Settings from './components/Settings';
 import { Toaster } from 'react-hot-toast';
 
@@ -17,6 +18,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/scrape" element={<Scrape />} />
             <Route path="/leads" element={<Leads />} />
+            <Route path="/sales" element={<Sales />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
