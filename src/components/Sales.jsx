@@ -22,9 +22,8 @@ const Sales = () => {
   const [viewMode, setViewMode] = useState('cards');
   const [followUp, setFollowUp] = useState({});
   const [notes, setNotes] = useState({});
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(10);
 
   // Load leads
   useEffect(() => {
@@ -44,6 +43,7 @@ const Sales = () => {
       setLeads(res.data);
       setFiltered(res.data);
     } catch (err) {
+      console.error('Fetch error:', err);
       toast.error('Failed to load leads');
     } finally {
       setLoading(false);
@@ -79,46 +79,55 @@ const Sales = () => {
     setCurrentPage(1);
   }, [filters, leads, sortBy, sortOrder]);
 
-  // Pagination logic
+  // Pagination
   const indexOfLast = currentPage * itemsPerPage;
   const indexOfFirst = indexOfLast - itemsPerPage;
   const currentLeads = filtered.slice(indexOfFirst, indexOfLast);
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
 
-  // Delete single lead (FIXED)
+  // 🗑️ DELETE SINGLE LEAD (FIXED)
   const deleteLead = async (id) => {
     if (!window.confirm('Are you sure you want to delete this lead?')) return;
     try {
-      await api.delete(`/leads/${id}`);
+      console.log('Deleting lead ID:', id);
+      const response = await api.delete(`/leads/${id}`);
+      console.log('Delete response:', response);
       toast.success('Lead deleted');
-      await fetchLeads(); // Refresh fresh data
+      await fetchLeads(); // Refresh from backend
     } catch (err) {
+      console.error('Delete error:', err);
       toast.error('Delete failed: ' + (err.response?.data?.error || err.message));
     }
   };
 
-  // Bulk delete (FIXED)
+  // 🗑️ BULK DELETE (FIXED)
   const bulkDelete = async () => {
     if (selectedLeads.length === 0) return toast.error('No leads selected');
     if (!window.confirm(`Delete ${selectedLeads.length} leads?`)) return;
-    try {
-      for (const id of selectedLeads) {
+    let success = 0;
+    for (const id of selectedLeads) {
+      try {
         await api.delete(`/leads/${id}`);
+        success++;
+      } catch (err) {
+        console.error(`Failed to delete ${id}:`, err);
       }
-      toast.success(`${selectedLeads.length} leads deleted`);
+    }
+    if (success > 0) {
+      toast.success(`${success} leads deleted`);
       await fetchLeads();
       setSelectedLeads([]);
-    } catch (err) {
-      toast.error('Bulk delete failed');
+    } else {
+      toast.error('Failed to delete');
     }
   };
 
-  // Export to CSV
+  // Export CSV
   const exportCSV = () => {
     const headers = ['Name', 'Phone', 'Email', 'Website', 'Address', 'Rating', 'FollowUp'];
     const rows = filtered.map(l => [l.name, l.phone, l.email, l.website, l.address, l.rating, followUp[l._id] || 'Pending']);
-    const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -128,7 +137,7 @@ const Sales = () => {
     toast.success('CSV exported');
   };
 
-  // Export to Excel
+  // Export Excel
   const exportExcel = () => {
     const data = filtered.map(l => ({
       Name: l.name, Phone: l.phone, Email: l.email, Website: l.website,
@@ -233,7 +242,6 @@ const Sales = () => {
 
   return (
     <div className="p-4 md:p-6 max-w-[1600px] mx-auto">
-      {/* Header */}
       <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent mb-6">Sales Outreach</h1>
 
       {/* Summary Cards */}
@@ -314,9 +322,6 @@ const Sales = () => {
             <button onClick={() => setViewMode('cards')} className={`px-3 py-1 rounded text-sm ${viewMode === 'cards' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}>Cards</button>
             <button onClick={() => setViewMode('table')} className={`px-3 py-1 rounded text-sm ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}>Table</button>
           </div>
-          <select value={itemsPerPage} onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }} className="border rounded px-2 py-1 text-sm">
-            <option>5</option><option>10</option><option>20</option><option>50</option>
-          </select>
         </div>
       </div>
 
@@ -361,7 +366,8 @@ const Sales = () => {
         <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50">
-              <tr><th className="p-3"><button onClick={toggleSelectAll}>{selectedLeads.length === currentLeads.length ? <FaCheckSquare /> : <FaSquare />}</button></th>
+              <tr>
+                <th className="p-3"><button onClick={toggleSelectAll}>{selectedLeads.length === currentLeads.length ? <FaCheckSquare /> : <FaSquare />}</button></th>
                 <th className="p-3 text-left">Name</th><th>Phone</th><th>Email</th><th>Address</th><th>Rating</th><th>Status</th><th>Actions</th>
               </tr>
             </thead>
@@ -392,7 +398,7 @@ const Sales = () => {
       )}
 
       {/* Pagination */}
-      {filtered.length > itemsPerPage && (
+      {totalPages > 1 && (
         <div className="flex justify-center items-center gap-3 mt-6">
           <button onClick={() => setCurrentPage(p => Math.max(1, p-1))} disabled={currentPage === 1} className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50">Prev</button>
           <span className="text-sm">Page {currentPage} of {totalPages}</span>
