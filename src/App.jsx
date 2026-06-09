@@ -6,7 +6,7 @@ import Leads from './components/Leads';
 import Sales from './components/Sales';
 import Settings from './components/Settings';
 import FacebookScrape from './components/FacebookScrape';
-import EmailExtractor from './components/EmailExtractor';  // <-- YE NAYI LINE
+import EmailExtractor from './components/EmailExtractor';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -18,12 +18,12 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/scrape" element={<Scrape />} />
+            <Route path="/google-maps" element={<Scrape />} />  {/* YE CHANGE */}
             <Route path="/facebook" element={<FacebookScrape />} />
             <Route path="/leads" element={<Leads />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/emails" element={<EmailExtractor />} />  {/* <-- YE NAYI LINE */}
+            <Route path="/emails" element={<EmailExtractor />} />
           </Routes>
         </div>
       </div>
