@@ -8,7 +8,7 @@ const Sidebar = () => {
 
   const items = [
     { path: '/dashboard', name: 'Dashboard', icon: LayoutDashboard },
-    { path: '/scrape', name: 'Google Maps', icon: Map },
+    { path: '/google-maps', name: 'Google Maps', icon: Map },
     { path: '/facebook', name: 'Facebook', icon: Facebook },
     { path: '/leads', name: 'Leads', icon: Users },
     { path: '/emails', name: 'Email Extractor', icon: Mail },
@@ -17,16 +17,15 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className={`relative transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'} bg-gradient-to-b from-indigo-900 to-purple-900 text-white`}>
-      
-      <button 
+    <div className={`relative transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'} bg-gradient-to-b from-indigo-900 to-indigo-800 text-white`}>
+      <button
         onClick={() => setCollapsed(!collapsed)}
         className="absolute -right-3 top-20 bg-white text-indigo-900 rounded-full p-1 shadow-md hover:bg-gray-100"
       >
         {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
       </button>
 
-      <div className="p-5 text-2xl font-bold border-b border-indigo-800 flex items-center justify-center gap-2">
+      <div className="p-5 text-xl font-bold border-b border-indigo-800 flex items-center justify-center gap-2">
         <Zap className="w-7 h-7" />
         {!collapsed && <span>LeadStriker</span>}
       </div>
@@ -36,11 +35,11 @@ const Sidebar = () => {
           <NavLink
             key={item.path}
             to={item.path}
-            className={({ isActive }) => `
-              flex items-center gap-3 px-3 py-3 mx-2 rounded-lg transition-all duration-200 ${
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-3 mx-2 rounded-lg transition-all duration-200 ${
                 isActive ? 'bg-indigo-600 shadow-md' : 'hover:bg-indigo-800'
-              } ${collapsed ? 'justify-center' : ''}
-            `}
+              } ${collapsed ? 'justify-center' : ''}`
+            }
             title={collapsed ? item.name : ''}
           >
             <item.icon size={20} />
