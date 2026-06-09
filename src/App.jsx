@@ -1,33 +1,35 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Scrape from './components/Scrape';
+import Facebook from './components/Facebook';
 import Leads from './components/Leads';
 import Sales from './components/Sales';
 import Settings from './components/Settings';
-import FacebookScrape from './components/FacebookScrape';
-import EmailExtractor from './components/EmailExtractor';  // <-- YE NAYI LINE
-import { Toaster } from 'react-hot-toast';
+import Emails from './components/Emails';
+import GoogleMaps from './components/Scrape'; // نام match کر دیا
+import Sidebar from './components/Sidebar';
+import './App.css';
 
 function App() {
   return (
     <BrowserRouter>
-      <div className="flex h-screen bg-gradient-to-br from-slate-50 to-gray-100">
+      <div className="app-layout">
         <Sidebar />
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="main-content">
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/scrape" element={<Scrape />} />
-            <Route path="/facebook" element={<FacebookScrape />} />
+            <Route path="/facebook" element={<Facebook />} />
             <Route path="/leads" element={<Leads />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/emails" element={<EmailExtractor />} />  {/* <-- YE NAYI LINE */}
+            <Route path="/emails" element={<Emails />} />
+            <Route path="/google-maps" element={<GoogleMaps />} />
+            <Route path="*" element={<div>Route not found</div>} />
           </Routes>
         </div>
       </div>
-      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
     </BrowserRouter>
   );
 }
