@@ -6,6 +6,7 @@ import Leads from './components/Leads';
 import Sales from './components/Sales';
 import Settings from './components/Settings';
 import FacebookScrape from './components/FacebookScrape';
+import EmailExtractor from './components/EmailExtractor';  // <-- YE NAYI LINE
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -22,10 +23,11 @@ function App() {
             <Route path="/leads" element={<Leads />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/emails" element={<EmailExtractor />} />  {/* <-- YE NAYI LINE */}
           </Routes>
         </div>
-        <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       </div>
+      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
     </BrowserRouter>
   );
 }
