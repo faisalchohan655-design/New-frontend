@@ -6,7 +6,7 @@ import Leads from './components/Leads';
 import Sales from './components/Sales';
 import Settings from './components/Settings';
 import Emails from './components/Emails';
-import GoogleMaps from './components/Scrape';  // یہاں سے match کر رہا ہے Scrape.jsx سے
+import GoogleMaps from './components/Scrape';
 import Sidebar from './components/Sidebar';
 import './App.css';
 
@@ -25,7 +25,7 @@ function App() {
             <Route path="/sales" element={<Sales />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/emails" element={<Emails />} />
-            <Route path="/google-maps" element={<GoogleMaps />} />  {/* Route بھی ٹھیک */}
+            <Route path="/google-maps" element={<GoogleMaps />} />
             <Route path="*" element={<div>Route not found</div>} />
           </Routes>
         </div>
