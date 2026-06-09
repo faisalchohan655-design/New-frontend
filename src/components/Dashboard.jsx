@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import api from '../api';
 import { Users, Star, Phone, Globe, TrendingUp, Award } from 'lucide-react';
 
@@ -11,7 +11,7 @@ const Dashboard = () => {
     api.get('/leads').then(res => {
       setLeads(res.data);
       const total = res.data.length;
-      const avgRating = total ? (res.data.reduce((s, l) => s + (l.rating || 0), 0) / total).toFixed(1) : 0;
+      const avgRating = total? (res.data.reduce((s, l) => s + (l.rating || 0), 0) / total).toFixed(1) : 0;
       const withPhone = res.data.filter(l => l.phone).length;
       const withWebsite = res.data.filter(l => l.website).length;
       const highRated = res.data.filter(l => (l.rating || 0) >= 4).length;
@@ -19,10 +19,10 @@ const Dashboard = () => {
     }).catch(console.error);
   }, []);
 
-  // Last 7 days chart
   const last7Days = [...Array(7)].map((_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d.toISOString().split('T')[0];
   });
+
   const chartData = last7Days.map(date => ({
     date: date.slice(5),
     count: leads.filter(l => l.createdAt?.split('T')[0] === date).length
@@ -43,10 +43,9 @@ const Dashboard = () => {
   ];
 
   return (
-    <div>
+    <div className="p-6">
       <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">Dashboard</h1>
-      
-      {/* Stats Cards */}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
         <div className="bg-white rounded-2xl shadow-lg p-5 flex items-center justify-between hover:shadow-xl transition">
           <div><p className="text-gray-500 text-sm">Total Leads</p><p className="text-3xl font-bold text-gray-800">{stats.total}</p></div>
@@ -70,10 +69,9 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-5 rounded-2xl shadow-lg">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5" /> Leads (Last 7 Days)</h2>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5" /> Leads Last 7 Days</h2>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={chartData}>
               <XAxis dataKey="date" />
