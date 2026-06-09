@@ -8,28 +8,29 @@ const Scrape = () => {
   const [city, setCity] = useState('');
   const [count, setCount] = useState(10);
   const [loading, setLoading] = useState(false);
+  const [requireEmail, setRequireEmail] = useState(false);
+  const [requirePhone, setRequirePhone] = useState(false);
+  const [requireWebsite, setRequireWebsite] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!keyword.trim() || !city.trim()) {
-      toast.error('Please fill both keyword and city');
-      return;
-    }
-    if (count < 1 || count > 50) {
-      toast.error('Count must be between 1 and 50');
-      return;
-    }
+    if (!keyword.trim() || !city.trim()) return toast.error('Fill all fields');
+    if (count < 1 || count > 50) return toast.error('Count must be 1-50');
     setLoading(true);
-    const toastId = toast.loading('Scraping Google Maps... This may take a few seconds');
+    const toastId = toast.loading('Scraping Google Maps...');
     try {
-      const res = await api.post('/scrape', { keyword, city, count });
+      const res = await api.post('/scrape', {
+        keyword,
+        city,
+        count,
+        filters: { requireEmail, requirePhone, requireWebsite }
+      });
       toast.success(res.data.message, { id: toastId });
       setKeyword('');
       setCity('');
       setCount(10);
     } catch (err) {
-      const errorMsg = err.response?.data?.error || err.message || 'Scraping failed';
-      toast.error(errorMsg, { id: toastId });
+      toast.error(err.response?.data?.error || 'Scraping failed', { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -37,33 +38,41 @@ const Scrape = () => {
 
   return (
     <div>
-      <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent mb-6">Scrape Google Maps</h1>
-      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
+      <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent mb-6">
+        Scrape Google Maps
+      </h1>
+      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-3xl mx-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2"><Building size={16} /> Market / Keyword</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+              <Building size={16} /> Market / Keyword
+            </label>
             <input
               type="text"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+              className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500"
               placeholder="e.g., restaurants, plumbers, dentists"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2"><MapPin size={16} /> City</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+              <MapPin size={16} /> City
+            </label>
             <input
               type="text"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-300 rounded-xl p-3"
               placeholder="e.g., New York, London, Karachi"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2"><Hash size={16} /> Number of Leads (max 50)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+              <Hash size={16} /> Number of Leads (max 50)
+            </label>
             <input
               type="number"
               min="1"
@@ -74,6 +83,44 @@ const Scrape = () => {
               required
             />
           </div>
+
+          {/* Quality Filters */}
+          <div className="border-t pt-4">
+            <h3 className="font-semibold text-gray-700 mb-3">Quality Filters (Optional)</h3>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => setRequireEmail(!requireEmail)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                  requireEmail ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                {requireEmail ? '✅' : '⭕'} Must have Email
+              </button>
+              <button
+                type="button"
+                onClick={() => setRequirePhone(!requirePhone)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                  requirePhone ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                {requirePhone ? '✅' : '⭕'} Must have Phone
+              </button>
+              <button
+                type="button"
+                onClick={() => setRequireWebsite(!requireWebsite)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                  requireWebsite ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                {requireWebsite ? '✅' : '⭕'} Must have Website
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Enable to save only leads with selected contact information.
+            </p>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
