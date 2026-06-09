@@ -1,54 +1,37 @@
-import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Map, Users, Settings, ChevronLeft, ChevronRight, Zap, Facebook, Mail } from 'lucide-react';
-import { FaWhatsapp } from 'react-icons/fa';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Dashboard from './components/Dashboard';
+import Scrape from './components/Scrape';
+import Facebook from './components/Facebook';
+import Leads from './components/Leads';
+import Sales from './components/Sales';
+import Settings from './components/Settings';
+import Emails from './components/Emails';
+import GoogleMaps from './components/ScrapeGoogleMaps'; // یہ لائن add کی
+import Sidebar from './components/Sidebar';
+import './App.css';
 
-const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
-
-  const items = [
-    { path: '/dashboard', name: 'Dashboard', icon: LayoutDashboard },
-    { path: '/google-maps', name: 'Google Maps', icon: Map },
-    { path: '/facebook', name: 'Facebook', icon: Facebook },
-    { path: '/leads', name: 'Leads', icon: Users },
-    { path: '/emails', name: 'Email Extractor', icon: Mail },
-    { path: '/sales', name: 'Sales Outreach', icon: FaWhatsapp },
-    { path: '/settings', name: 'Settings', icon: Settings }
-  ];
-
+function App() {
   return (
-    <div className={`relative transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'} bg-gradient-to-b from-indigo-900 to-indigo-800 text-white`}>
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-20 bg-white text-indigo-900 rounded-full p-1 shadow-md hover:bg-gray-100"
-      >
-        {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-      </button>
-
-      <div className="p-5 text-xl font-bold border-b border-indigo-800 flex items-center justify-center gap-2">
-        <Zap className="w-7 h-7" />
-        {!collapsed && <span>LeadStriker</span>}
+    <BrowserRouter>
+      <div className="app-layout">
+        <Sidebar />
+        <div className="main-content">
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/scrape" element={<Scrape />} />
+            <Route path="/facebook" element={<Facebook />} />
+            <Route path="/leads" element={<Leads />} />
+            <Route path="/sales" element={<Sales />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/emails" element={<Emails />} />
+            <Route path="/google-maps" element={<GoogleMaps />} /> {/* یہ لائن add کی */}
+            <Route path="*" element={<div>Route not found</div>} />
+          </Routes>
+        </div>
       </div>
-
-      <nav className="mt-4">
-        {items.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-3 mx-2 rounded-lg transition-all duration-200 ${
-                isActive ? 'bg-indigo-600 shadow-md' : 'hover:bg-indigo-800'
-              } ${collapsed ? 'justify-center' : ''}`
-            }
-            title={collapsed ? item.name : ''}
-          >
-            <item.icon size={20} />
-            {!collapsed && <span>{item.name}</span>}
-          </NavLink>
-        ))}
-      </nav>
-    </div>
+    </BrowserRouter>
   );
-};
+}
 
-export default Sidebar;
+export default App;
