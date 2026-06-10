@@ -1,45 +1,31 @@
-import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Mail, Users, Map, Facebook, Settings, Send } from 'lucide-react';
+import { useState } from 'react';
+import { NavLink } from 'react-router-dom';
+import { LayoutDashboard, Map, Users, Settings, ChevronLeft, ChevronRight, Zap, Facebook, Mail } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 
-export default function Sidebar({ isOpen, setIsOpen }) {
-  const location = useLocation();
-  
-  const menu = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Google Maps', path: '/google-maps', icon: Map },
-    { name: 'Facebook', path: '/facebook', icon: Facebook },
-    { name: 'Leads', path: '/leads', icon: Users },
-    { name: 'Email Extractor', path: '/emails', icon: Mail },
-    { name: 'Sales Outreach', path: '/outreach', icon: Send },
-    { name: 'Settings', path: '/settings', icon: Settings },
+const Sidebar = () => {
+  const [collapsed, setCollapsed] = useState(false);
+  const items = [
+    { path: '/dashboard', name: 'Dashboard', icon: LayoutDashboard },
+    { path: '/scrape', name: 'Google Maps', icon: Map },
+    { path: '/facebook', name: 'Facebook', icon: Facebook },
+    { path: '/email-extractor', name: 'Email Extractor', icon: Mail },
+    { path: '/leads', name: 'Leads', icon: Users },
+    { path: '/sales', name: 'Sales Outreach', icon: FaWhatsapp },
+    { path: '/settings', name: 'Settings', icon: Settings }
   ];
-
   return (
-    <>
-      {/* Mobile overlay */}
-      {isOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setIsOpen(false)} />}
-      
-      {/* Sidebar */}
-      <aside className={`fixed md:relative z-50 w-64 bg-gradient-to-b from-purple-900 to-purple-700 text-white h-screen transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
-        <div className="p-6">
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            ⚡ LeadStriker
-          </h2>
-        </div>
-        <nav className="mt-6">
-          {menu.map(item => {
-            const Icon = item.icon;
-            return (
-              <Link key={item.path} to={item.path}
-                className={`flex items-center gap-3 px-6 py-3 hover:bg-purple-800 ${location.pathname === item.path ? 'bg-purple-800 border-l-4 border-white' : ''}`}
-                onClick={() => setIsOpen(false)}>
-                <Icon className="w-5 h-5" />
-                <span>{item.name}</span>
-              </Link>
-            );
-          })}
-        </nav>
-      </aside>
-    </>
+    <div className={`relative transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'} bg-gradient-to-b from-indigo-900 to-purple-900 text-white shadow-2xl`}>
+      <button onClick={() => setCollapsed(!collapsed)} className="absolute -right-3 top-20 bg-white text-indigo-900 rounded-full p-1 shadow-md">{collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}</button>
+      <div className="p-5 text-2xl font-bold border-b border-indigo-800 flex items-center justify-center gap-2"><Zap className="w-6 h-6" />{!collapsed && <span>LeadStriker</span>}{collapsed && <span>LS</span>}</div>
+      <nav className="mt-8">
+        {items.map((item) => (
+          <NavLink key={item.path} to={item.path} className={({ isActive }) => `flex items-center gap-3 px-6 py-3 my-1 mx-2 rounded-lg ${isActive ? 'bg-indigo-600 shadow-md' : 'hover:bg-indigo-800'} ${collapsed ? 'justify-center' : ''}`}>
+            <item.icon size={20} />{!collapsed && <span>{item.name}</span>}
+          </NavLink>
+        ))}
+      </nav>
+    </div>
   );
-}
+};
+export default Sidebar;
