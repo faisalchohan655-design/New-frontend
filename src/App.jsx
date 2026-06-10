@@ -7,7 +7,8 @@ import Sales from './components/Sales';
 import Settings from './components/Settings';
 import FacebookScrape from './components/FacebookScrape';
 import EmailExtractor from './components/EmailExtractor';
-import { Toaster } from 'react-hot-toast';
+import WebsiteLeads from './components/WebsiteLeads';   // ✅ new component
+import { Toaster } from 'react-hot-toast';              // ✅ fixed import
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="/scrape" element={<Scrape />} />
             <Route path="/facebook" element={<FacebookScrape />} />
             <Route path="/email-extractor" element={<EmailExtractor />} />
+            <Route path="/website-leads" element={<WebsiteLeads />} />   {/* ✅ new route */}
             <Route path="/leads" element={<Leads />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/settings" element={<Settings />} />
