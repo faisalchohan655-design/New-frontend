@@ -66,7 +66,7 @@ const EmailExtractor = () => {
   };
 
   const exportExcel = () => {
-    if (!filteredLeads.length) { toast.error('No data'); return; }
+    if (!filteredLeads.length) return toast.error('No data');
     const data = filteredLeads.map(l => ({ Email: l.email, Verified: l.verified ? 'Yes' : 'No', Phone: l.phone || '', Source: l.source }));
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -76,24 +76,26 @@ const EmailExtractor = () => {
   };
 
   const saveToLeads = async () => {
-    if (!filteredLeads.length) { toast.error('No leads'); return; }
+    if (!filteredLeads.length) return toast.error('No leads to save');
     setLoading(true);
     try {
       await api.post('/email/save-leads', { leads: filteredLeads });
       toast.success(`Saved ${filteredLeads.length} leads`);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Save failed');
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const openSendModal = () => {
-    if (selectedEmails.length === 0) { toast.error('Select emails'); return; }
-    if (selectedEmails.length > 50) { toast.error('Max 50'); return; }
+    if (selectedEmails.length === 0) return toast.error('Select emails');
+    if (selectedEmails.length > 50) return toast.error('Max 50 recipients');
     setShowSendModal(true);
   };
 
   const sendEmails = async () => {
-    if (!emailSubject || !emailMessage) { toast.error('Subject & message required'); return; }
+    if (!emailSubject || !emailMessage) return toast.error('Subject & message required');
     setLoading(true);
     try {
       await api.post('/email/bulk-send', { recipients: selectedEmails, subject: emailSubject, message: emailMessage });
@@ -105,7 +107,9 @@ const EmailExtractor = () => {
       setSelectAll(false);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Send failed');
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleSelectAll = () => {
