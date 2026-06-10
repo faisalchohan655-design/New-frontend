@@ -22,7 +22,7 @@ const WebsiteLeads = () => {
     setLoading(true);
     try {
       const res = await api.get('/leads');
-      // Only leads with a website
+      // Only leads that have a website
       const withWebsite = res.data.filter(l => l.website && l.website.trim() !== '');
       setLeads(withWebsite);
       setFiltered(withWebsite);
@@ -49,7 +49,7 @@ const WebsiteLeads = () => {
     try {
       const res = await api.post('/email/bulk-extract-from-leads', { leadIds: selectedIds });
       toast.success(`${res.data.totalNewEmails} new emails extracted!`, { id: toastId });
-      fetchLeads(); // refresh to show new emails
+      fetchLeads();
     } catch (err) {
       toast.error('Extraction failed', { id: toastId });
     } finally {
@@ -86,27 +86,34 @@ const WebsiteLeads = () => {
 
   const openEmailModal = () => {
     const leadsWithEmail = filtered.filter(l => selectedIds.includes(l._id) && l.email);
-    if (leadsWithEmail.length === 0) return toast.error('Selected leads have no email (extract first)');
-    if (leadsWithEmail.length > 50) return toast.error('Max 50 recipients per batch');
+    if (leadsWithEmail.length === 0) {
+      toast.error('Selected leads have no email (extract first)');
+      return;
+    }
+    if (leadsWithEmail.length > 50) {
+      toast.error('Max 50 recipients (mailto limit)');
+      return;
+    }
     setShowEmailModal(true);
   };
 
-  const sendEmails = async () => {
-    if (!emailSubject || !emailMessage) return toast.error('Subject and message required');
+  // MAILTO VERSION – opens default email client
+  const sendEmails = () => {
     const recipients = filtered.filter(l => selectedIds.includes(l._id) && l.email).map(l => l.email);
-    if (recipients.length === 0) return toast.error('No valid emails');
-    setLoading(true);
-    try {
-      await api.post('/email/bulk-send', { recipients, subject: emailSubject, message: emailMessage });
-      toast.success(`Sent to ${recipients.length} recipients`);
-      setShowEmailModal(false);
-      setEmailSubject('');
-      setEmailMessage('');
-    } catch (err) {
-      toast.error('Send failed');
-    } finally {
-      setLoading(false);
+    if (recipients.length === 0) {
+      toast.error('No valid emails selected');
+      return;
     }
+    if (!emailSubject || !emailMessage) {
+      toast.error('Subject and message required');
+      return;
+    }
+    const mailtoLink = `mailto:${recipients.join(',')}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailMessage)}`;
+    window.open(mailtoLink, '_blank');
+    toast.success(`Opened email client for ${recipients.length} recipients`);
+    setShowEmailModal(false);
+    setEmailSubject('');
+    setEmailMessage('');
   };
 
   const toggleSelectAll = () => {
@@ -131,23 +138,44 @@ const WebsiteLeads = () => {
       <div className="bg-white p-4 rounded-xl shadow mb-6 flex flex-wrap gap-4 items-end">
         <div>
           <label className="block text-sm">Min Rating</label>
-          <input type="range" min="0" max="5" step="0.5" value={filters.minRating} onChange={e => setFilters({...filters, minRating: parseFloat(e.target.value)})} />
+          <input
+            type="range"
+            min="0"
+            max="5"
+            step="0.5"
+            value={filters.minRating}
+            onChange={e => setFilters({ ...filters, minRating: parseFloat(e.target.value) })}
+          />
           <span className="ml-2">{filters.minRating}★</span>
         </div>
         <div>
           <label className="block text-sm">City (in address)</label>
-          <input type="text" placeholder="e.g., Karachi" value={filters.city} onChange={e => setFilters({...filters, city: e.target.value})} className="border rounded p-1" />
+          <input
+            type="text"
+            placeholder="e.g., Karachi"
+            value={filters.city}
+            onChange={e => setFilters({ ...filters, city: e.target.value })}
+            className="border rounded p-1"
+          />
         </div>
         <div>
           <label className="block text-sm">Search by name</label>
-          <input type="text" placeholder="Business name" value={filters.search} onChange={e => setFilters({...filters, search: e.target.value})} className="border rounded p-1" />
+          <input
+            type="text"
+            placeholder="Business name"
+            value={filters.search}
+            onChange={e => setFilters({ ...filters, search: e.target.value })}
+            className="border rounded p-1"
+          />
         </div>
       </div>
 
       {/* Actions */}
       <div className="bg-white p-3 rounded-xl shadow mb-6 flex flex-wrap gap-3 items-center">
         <button onClick={toggleSelectAll} className="bg-gray-500 text-white px-3 py-1 rounded">Select All</button>
-        <button onClick={handleExtractEmails} disabled={extracting} className="bg-blue-600 text-white px-3 py-1 rounded">{extracting ? 'Extracting...' : '📧 Extract Emails'}</button>
+        <button onClick={handleExtractEmails} disabled={extracting} className="bg-blue-600 text-white px-3 py-1 rounded">
+          {extracting ? 'Extracting...' : '📧 Extract Emails'}
+        </button>
         <button onClick={openEmailModal} className="bg-green-600 text-white px-3 py-1 rounded">✉️ Send Email</button>
         <button onClick={handleDelete} className="bg-red-600 text-white px-3 py-1 rounded">🗑️ Delete</button>
         <button onClick={exportExcel} className="bg-purple-600 text-white px-3 py-1 rounded">📊 Export Excel</button>
@@ -159,22 +187,36 @@ const WebsiteLeads = () => {
         <table className="min-w-full text-sm">
           <thead className="bg-gray-100">
             <tr>
-              <th className="p-3">Select</th><th className="text-left">Name</th><th>Website</th><th>Extracted Email</th><th>Phone</th><th>City</th><th>Rating</th>
+              <th className="p-3">Select</th>
+              <th className="text-left">Name</th>
+              <th>Website</th>
+              <th>Extracted Email</th>
+              <th>Phone</th>
+              <th>City</th>
+              <th>Rating</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map(lead => (
               <tr key={lead._id} className="border-t">
-                <td className="p-3"><input type="checkbox" checked={selectedIds.includes(lead._id)} onChange={() => toggleSelect(lead._id)} /></td>
+                <td className="p-3">
+                  <input type="checkbox" checked={selectedIds.includes(lead._id)} onChange={() => toggleSelect(lead._id)} />
+                </td>
                 <td className="p-3 font-medium">{lead.name}</td>
-                <td className="p-3"><a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate max-w-xs block">{lead.website}</a></td>
+                <td className="p-3">
+                  <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate max-w-xs block">
+                    {lead.website}
+                  </a>
+                </td>
                 <td className="p-3">{lead.email || '❌ Not extracted'}</td>
                 <td className="p-3">{lead.phone || '-'}</td>
                 <td className="p-3">{lead.address?.split(',').slice(-2).join(',').trim() || '-'}</td>
                 <td className="p-3">{lead.rating || '-'}</td>
               </tr>
             ))}
-            {filtered.length === 0 && <tr><td colSpan="7" className="text-center p-6">No leads with website found</td></tr>}
+            {filtered.length === 0 && (
+              <tr><td colSpan="7" className="text-center p-6">No leads with website found</td></tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -184,11 +226,23 @@ const WebsiteLeads = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-2xl">
             <h2 className="text-2xl font-bold mb-4">Send Email to Selected Leads</h2>
-            <input type="text" placeholder="Subject" value={emailSubject} onChange={e => setEmailSubject(e.target.value)} className="w-full border rounded-xl p-2 mb-3" />
-            <textarea rows="6" placeholder="Message (HTML allowed)" value={emailMessage} onChange={e => setEmailMessage(e.target.value)} className="w-full border rounded-xl p-2 mb-3" />
+            <input
+              type="text"
+              placeholder="Subject"
+              value={emailSubject}
+              onChange={e => setEmailSubject(e.target.value)}
+              className="w-full border rounded-xl p-2 mb-3"
+            />
+            <textarea
+              rows="6"
+              placeholder="Message (HTML allowed)"
+              value={emailMessage}
+              onChange={e => setEmailMessage(e.target.value)}
+              className="w-full border rounded-xl p-2 mb-3"
+            />
             <div className="flex justify-end gap-2">
               <button onClick={() => setShowEmailModal(false)} className="bg-gray-300 px-4 py-2 rounded">Cancel</button>
-              <button onClick={sendEmails} className="bg-green-600 text-white px-4 py-2 rounded">Send Now</button>
+              <button onClick={sendEmails} className="bg-green-600 text-white px-4 py-2 rounded">Open Email Client</button>
             </div>
           </div>
         </div>
