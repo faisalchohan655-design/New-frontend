@@ -45,9 +45,9 @@ const Scrape = () => {
           <div className="border-t pt-4">
             <h3 className="font-semibold text-gray-700 mb-3">Quality Filters (Optional)</h3>
             <div className="flex flex-wrap gap-3">
-              <button type="button" onClick={()=>setRequireEmail(!requireEmail)} className={`px-4 py-2 rounded-lg ${requireEmail ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}>📧 Must have Email</button>
-              <button type="button" onClick={()=>setRequirePhone(!requirePhone)} className={`px-4 py-2 rounded-lg ${requirePhone ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}>📞 Must have Phone</button>
-              <button type="button" onClick={()=>setRequireWebsite(!requireWebsite)} className={`px-4 py-2 rounded-lg ${requireWebsite ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}>🌐 Must have Website</button>
+              <button type="button" onClick={()=>setRequireEmail(!requireEmail)} className={`px-4 py-2 rounded-lg ${requireEmail ? 'bg-green-600 text-white' : 'bg-gray-200'}`}>📧 Must have Email</button>
+              <button type="button" onClick={()=>setRequirePhone(!requirePhone)} className={`px-4 py-2 rounded-lg ${requirePhone ? 'bg-green-600 text-white' : 'bg-gray-200'}`}>📞 Must have Phone</button>
+              <button type="button" onClick={()=>setRequireWebsite(!requireWebsite)} className={`px-4 py-2 rounded-lg ${requireWebsite ? 'bg-green-600 text-white' : 'bg-gray-200'}`}>🌐 Must have Website</button>
             </div>
           </div>
 
