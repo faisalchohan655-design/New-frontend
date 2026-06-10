@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Map, Users, Settings, ChevronLeft, ChevronRight, Zap, Facebook, Mail } from 'lucide-react';
+import { LayoutDashboard, Map, Users, Settings, ChevronLeft, ChevronRight, Zap, Facebook, Mail, Globe } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
 const Sidebar = () => {
@@ -10,6 +10,7 @@ const Sidebar = () => {
     { path: '/scrape', name: 'Google Maps', icon: Map },
     { path: '/facebook', name: 'Facebook', icon: Facebook },
     { path: '/email-extractor', name: 'Email Extractor', icon: Mail },
+    { path: '/website-leads', name: 'Website Leads', icon: Globe },   // ✅ new menu item
     { path: '/leads', name: 'Leads', icon: Users },
     { path: '/sales', name: 'Sales Outreach', icon: FaWhatsapp },
     { path: '/settings', name: 'Settings', icon: Settings }
