@@ -97,7 +97,6 @@ const WebsiteLeads = () => {
     setShowEmailModal(true);
   };
 
-  // ✅ NEW: Send emails via backend API (Unosend)
   const sendEmails = async () => {
     const recipients = filtered.filter(l => selectedIds.includes(l._id) && l.email).map(l => l.email);
     if (recipients.length === 0) {
@@ -141,43 +140,22 @@ const WebsiteLeads = () => {
         Website Leads – Bulk Email Sender
       </h1>
 
-      {/* Filters */}
       <div className="bg-white p-4 rounded-xl shadow mb-6 flex flex-wrap gap-4 items-end">
         <div>
           <label className="block text-sm">Min Rating</label>
-          <input
-            type="range"
-            min="0"
-            max="5"
-            step="0.5"
-            value={filters.minRating}
-            onChange={e => setFilters({ ...filters, minRating: parseFloat(e.target.value) })}
-          />
+          <input type="range" min="0" max="5" step="0.5" value={filters.minRating} onChange={e => setFilters({ ...filters, minRating: parseFloat(e.target.value) })} />
           <span className="ml-2">{filters.minRating}★</span>
         </div>
         <div>
           <label className="block text-sm">City (in address)</label>
-          <input
-            type="text"
-            placeholder="e.g., Karachi"
-            value={filters.city}
-            onChange={e => setFilters({ ...filters, city: e.target.value })}
-            className="border rounded p-1"
-          />
+          <input type="text" placeholder="e.g., Karachi" value={filters.city} onChange={e => setFilters({ ...filters, city: e.target.value })} className="border rounded p-1" />
         </div>
         <div>
           <label className="block text-sm">Search by name</label>
-          <input
-            type="text"
-            placeholder="Business name"
-            value={filters.search}
-            onChange={e => setFilters({ ...filters, search: e.target.value })}
-            className="border rounded p-1"
-          />
+          <input type="text" placeholder="Business name" value={filters.search} onChange={e => setFilters({ ...filters, search: e.target.value })} className="border rounded p-1" />
         </div>
       </div>
 
-      {/* Actions */}
       <div className="bg-white p-3 rounded-xl shadow mb-6 flex flex-wrap gap-3 items-center">
         <button onClick={toggleSelectAll} className="bg-gray-500 text-white px-3 py-1 rounded">Select All</button>
         <button onClick={handleExtractEmails} disabled={extracting} className="bg-blue-600 text-white px-3 py-1 rounded">
@@ -191,7 +169,6 @@ const WebsiteLeads = () => {
         <span className="text-sm ml-auto">{selectedIds.length} selected / {filtered.length} total</span>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-100">
@@ -208,15 +185,9 @@ const WebsiteLeads = () => {
           <tbody>
             {filtered.map(lead => (
               <tr key={lead._id} className="border-t">
-                <td className="p-3">
-                  <input type="checkbox" checked={selectedIds.includes(lead._id)} onChange={() => toggleSelect(lead._id)} />
-                </td>
+                <td className="p-3"><input type="checkbox" checked={selectedIds.includes(lead._id)} onChange={() => toggleSelect(lead._id)} /></td>
                 <td className="p-3 font-medium">{lead.name}</td>
-                <td className="p-3">
-                  <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate max-w-xs block">
-                    {lead.website}
-                  </a>
-                </td>
+                <td className="p-3"><a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate max-w-xs block">{lead.website}</a></td>
                 <td className="p-3">{lead.email || '❌ Not extracted'}</td>
                 <td className="p-3">{lead.phone || '-'}</td>
                 <td className="p-3">{lead.address?.split(',').slice(-2).join(',').trim() || '-'}</td>
@@ -224,36 +195,23 @@ const WebsiteLeads = () => {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan="7" className="text-center p-6">No leads with website found</tr>
+              <tr>
+                <td colSpan="7" className="text-center p-6">No leads with website found</td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
 
-      {/* Email Modal */}
       {showEmailModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-2xl">
             <h2 className="text-2xl font-bold mb-4">Send Email to Selected Leads</h2>
-            <input
-              type="text"
-              placeholder="Subject"
-              value={emailSubject}
-              onChange={e => setEmailSubject(e.target.value)}
-              className="w-full border rounded-xl p-2 mb-3"
-            />
-            <textarea
-              rows="6"
-              placeholder="Message (HTML allowed)"
-              value={emailMessage}
-              onChange={e => setEmailMessage(e.target.value)}
-              className="w-full border rounded-xl p-2 mb-3"
-            />
+            <input type="text" placeholder="Subject" value={emailSubject} onChange={e => setEmailSubject(e.target.value)} className="w-full border rounded-xl p-2 mb-3" />
+            <textarea rows="6" placeholder="Message (HTML allowed)" value={emailMessage} onChange={e => setEmailMessage(e.target.value)} className="w-full border rounded-xl p-2 mb-3" />
             <div className="flex justify-end gap-2">
               <button onClick={() => setShowEmailModal(false)} className="bg-gray-300 px-4 py-2 rounded">Cancel</button>
-              <button onClick={sendEmails} disabled={sending} className="bg-green-600 text-white px-4 py-2 rounded">
-                {sending ? 'Sending...' : 'Send Now'}
-              </button>
+              <button onClick={sendEmails} disabled={sending} className="bg-green-600 text-white px-4 py-2 rounded">{sending ? 'Sending...' : 'Send Now'}</button>
             </div>
           </div>
         </div>
