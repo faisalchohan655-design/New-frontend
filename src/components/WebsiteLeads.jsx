@@ -10,6 +10,7 @@ const WebsiteLeads = () => {
   const [filters, setFilters] = useState({ minRating: 0, city: '', search: '' });
   const [loading, setLoading] = useState(false);
   const [extracting, setExtracting] = useState(false);
+  const [sending, setSending] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailSubject, setEmailSubject] = useState('');
   const [emailMessage, setEmailMessage] = useState('');
@@ -96,8 +97,8 @@ const WebsiteLeads = () => {
     setShowEmailModal(true);
   };
 
-  // ✅ Mailto version – opens default email client
-  const sendEmails = () => {
+  // ✅ NEW: Send emails via backend API (Unosend)
+  const sendEmails = async () => {
     const recipients = filtered.filter(l => selectedIds.includes(l._id) && l.email).map(l => l.email);
     if (recipients.length === 0) {
       toast.error('No valid emails selected');
@@ -107,12 +108,19 @@ const WebsiteLeads = () => {
       toast.error('Subject and message required');
       return;
     }
-    const mailtoLink = `mailto:${recipients.join(',')}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailMessage)}`;
-    window.open(mailtoLink, '_blank');
-    toast.success(`Opened email client for ${recipients.length} recipients`);
-    setShowEmailModal(false);
-    setEmailSubject('');
-    setEmailMessage('');
+    setSending(true);
+    const toastId = toast.loading(`Sending to ${recipients.length} recipients...`);
+    try {
+      await api.post('/email/bulk-send', { recipients, subject: emailSubject, message: emailMessage });
+      toast.success(`✅ Sent to ${recipients.length} recipients`, { id: toastId });
+      setShowEmailModal(false);
+      setEmailSubject('');
+      setEmailMessage('');
+    } catch (err) {
+      toast.error('Send failed: ' + (err.response?.data?.error || err.message), { id: toastId });
+    } finally {
+      setSending(false);
+    }
   };
 
   const toggleSelectAll = () => {
@@ -175,7 +183,9 @@ const WebsiteLeads = () => {
         <button onClick={handleExtractEmails} disabled={extracting} className="bg-blue-600 text-white px-3 py-1 rounded">
           {extracting ? 'Extracting...' : '📧 Extract Emails'}
         </button>
-        <button onClick={openEmailModal} className="bg-green-600 text-white px-3 py-1 rounded">✉️ Send Email</button>
+        <button onClick={openEmailModal} disabled={sending} className="bg-green-600 text-white px-3 py-1 rounded">
+          {sending ? 'Sending...' : '✉️ Send Email'}
+        </button>
         <button onClick={handleDelete} className="bg-red-600 text-white px-3 py-1 rounded">🗑️ Delete</button>
         <button onClick={exportExcel} className="bg-purple-600 text-white px-3 py-1 rounded">📊 Export Excel</button>
         <span className="text-sm ml-auto">{selectedIds.length} selected / {filtered.length} total</span>
@@ -214,7 +224,7 @@ const WebsiteLeads = () => {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan="7" className="text-center p-6">No leads with website found</td></tr>
+              <tr><td colSpan="7" className="text-center p-6">No leads with website found</tr>
             )}
           </tbody>
         </table>
@@ -241,8 +251,8 @@ const WebsiteLeads = () => {
             />
             <div className="flex justify-end gap-2">
               <button onClick={() => setShowEmailModal(false)} className="bg-gray-300 px-4 py-2 rounded">Cancel</button>
-              <button onClick={sendEmails} className="bg-green-600 text-white px-4 py-2 rounded">
-                Open Email Client
+              <button onClick={sendEmails} disabled={sending} className="bg-green-600 text-white px-4 py-2 rounded">
+                {sending ? 'Sending...' : 'Send Now'}
               </button>
             </div>
           </div>
