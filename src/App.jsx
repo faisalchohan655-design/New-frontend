@@ -1,14 +1,16 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
-import Scrape from './components/Scrape';
-import Leads from './components/Leads';
-import Sales from './components/Sales';
+import LocalBusinessInsights from './components/LocalBusinessInsights';
+import SocialInsights from './components/SocialInsights';
+import DomainInsights from './components/DomainInsights';
+import WebsiteIntelligence from './components/WebsiteIntelligence';
+import CampaignOutreach from './components/CampaignOutreach';
+import ConversationInbox from './components/ConversationInbox';
+import CRMPipeline from './components/CRMPipeline';
+import WhatsAppOutreach from './components/WhatsAppOutreach';
 import Settings from './components/Settings';
-import FacebookScrape from './components/FacebookScrape';
-import EmailExtractor from './components/EmailExtractor';
-import WebsiteLeads from './components/WebsiteLeads';   // ✅ new component
-import { Toaster } from 'react-hot-toast';              // ✅ fixed import
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   return (
@@ -19,12 +21,14 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/scrape" element={<Scrape />} />
-            <Route path="/facebook" element={<FacebookScrape />} />
-            <Route path="/email-extractor" element={<EmailExtractor />} />
-            <Route path="/website-leads" element={<WebsiteLeads />} />   {/* ✅ new route */}
-            <Route path="/leads" element={<Leads />} />
-            <Route path="/sales" element={<Sales />} />
+            <Route path="/local-business-insights" element={<LocalBusinessInsights />} />
+            <Route path="/social-insights" element={<SocialInsights />} />
+            <Route path="/domain-insights" element={<DomainInsights />} />
+            <Route path="/website-intelligence" element={<WebsiteIntelligence />} />
+            <Route path="/campaign-outreach" element={<CampaignOutreach />} />
+            <Route path="/conversation-inbox" element={<ConversationInbox />} />
+            <Route path="/crm-pipeline" element={<CRMPipeline />} />
+            <Route path="/whatsapp-outreach" element={<WhatsAppOutreach />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
@@ -33,5 +37,4 @@ function App() {
     </BrowserRouter>
   );
 }
-
 export default App;
