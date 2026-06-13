@@ -1,14 +1,24 @@
 import { useEffect, useState } from 'react';
 import api from '../api';
-import { FaWhatsapp, FaEnvelope, FaTrash, FaCheckSquare, FaSquare, FaSort, FaEdit, FaCheck, FaClock, FaFilter, FaTimes, FaSpinner } from 'react-icons/fa';
+import { FaWhatsapp, FaEnvelope, FaTrash, FaCheckSquare, FaSquare, FaSort, FaEdit, FaCheck, FaClock, FaFilter, FaTimes, FaSpinner, FaFileExcel, FaFileCsv, FaFilePdf } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
-const Sales = () => {
+const CampaignOutreach = () => {
   const [leads, setLeads] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [selectedLeads, setSelectedLeads] = useState([]);
-  const [filters, setFilters] = useState({ minRating: 0, phoneOnly: false, websiteOnly: false, city: '', search: '' });
+  const [filters, setFilters] = useState({
+    minRating: 0,
+    phoneOnly: false,
+    websiteOnly: false,
+    city: '',
+    search: '',
+    source: 'all',
+    dateRange: 'all'
+  });
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [viewMode, setViewMode] = useState('cards');
@@ -31,7 +41,22 @@ const Sales = () => {
     if (filters.websiteOnly) result = result.filter(l => l.website);
     if (filters.city) result = result.filter(l => (l.address||'').toLowerCase().includes(filters.city.toLowerCase()));
     if (filters.search) result = result.filter(l => l.name.toLowerCase().includes(filters.search.toLowerCase()));
-    result.sort((a,b) => { let av = a[sortBy]||'', bv = b[sortBy]||''; if(sortBy==='rating'){av=av||0; bv=bv||0;} if(sortBy==='date'){av=new Date(a.createdAt); bv=new Date(b.createdAt);} if(av<bv) return sortOrder==='asc'?-1:1; if(av>bv) return sortOrder==='asc'?1:-1; return 0; });
+    if (filters.source !== 'all') result = result.filter(l => (l.source || 'google').toLowerCase() === filters.source.toLowerCase());
+    if (filters.dateRange !== 'all') {
+      const now = new Date();
+      let cutoff = new Date();
+      if (filters.dateRange === 'week') cutoff.setDate(now.getDate() - 7);
+      else if (filters.dateRange === 'month') cutoff.setDate(now.getDate() - 30);
+      result = result.filter(l => new Date(l.createdAt) >= cutoff);
+    }
+    result.sort((a,b) => {
+      let av = a[sortBy]||'', bv = b[sortBy]||'';
+      if(sortBy==='rating'){av=av||0; bv=bv||0;}
+      if(sortBy==='date'){av=new Date(a.createdAt); bv=new Date(b.createdAt);}
+      if(av<bv) return sortOrder==='asc'?-1:1;
+      if(av>bv) return sortOrder==='asc'?1:-1;
+      return 0;
+    });
     setFiltered(result);
     setSelectedLeads([]);
     setCurrentPage(1);
@@ -44,35 +69,66 @@ const Sales = () => {
 
   const deleteLead = async (id) => { if(!window.confirm('Delete this lead?')) return; try{ await api.delete(`/leads/${id}`); setLeads(leads.filter(l=>l._id!==id)); toast.success('Deleted'); }catch(e){ toast.error('Delete failed'); } };
   const bulkDelete = async () => { if(selectedLeads.length===0) return toast.error('Select leads'); if(!window.confirm(`Delete ${selectedLeads.length} leads?`)) return; for(const id of selectedLeads) await api.delete(`/leads/${id}`); setLeads(leads.filter(l=>!selectedLeads.includes(l._id))); setSelectedLeads([]); toast.success(`${selectedLeads.length} deleted`); };
-  const exportExcel = () => { const data = filtered.map(l=>({ Name:l.name, Phone:l.phone, Email:l.email, Website:l.website, Address:l.address, Rating:l.rating, FollowUp: followUp[l._id]||'Pending' })); const ws=XLSX.utils.json_to_sheet(data); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads'); XLSX.writeFile(wb,`leads_${Date.now()}.xlsx`); toast.success('Exported'); };
-  const bulkWhatsApp = () => { const selected = leads.filter(l=>selectedLeads.includes(l._id) && l.phone); if(selected.length===0) return toast.error('No phone numbers'); selected.forEach(l=>window.open(`https://wa.me/${l.phone.replace(/\D/g,'')}?text=${encodeURIComponent('Hi, from LeadStriker!')}`,'_blank')); toast.success(`Opened ${selected.length} chats`); };
+  
+  const exportCSV = () => {
+    const headers = ['Name','Phone','Email','Website','Address','Rating','FollowUp'];
+    const rows = filtered.map(l => [l.name, l.phone, l.email, l.website, l.address, l.rating, followUp[l._id]||'Pending']);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `campaign_leads_${Date.now()}.csv`; a.click(); URL.revokeObjectURL(blob);
+    toast.success('CSV exported');
+  };
+  const exportExcel = () => {
+    const data = filtered.map(l => ({ Name:l.name, Phone:l.phone, Email:l.email, Website:l.website, Address:l.address, Rating:l.rating, FollowUp: followUp[l._id]||'Pending' }));
+    const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'CampaignLeads'); XLSX.writeFile(wb, `campaign_leads_${Date.now()}.xlsx`);
+    toast.success('Excel exported');
+  };
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    doc.text('Campaign Outreach Report', 14, 16);
+    doc.autoTable({
+      head: [['Name','Phone','Email','Rating','FollowUp']],
+      body: filtered.map(l => [l.name, l.phone, l.email, l.rating, followUp[l._id]||'Pending']),
+      startY: 20,
+    });
+    doc.save(`campaign_report_${Date.now()}.pdf`);
+    toast.success('PDF exported');
+  };
+
+  const bulkWhatsApp = () => { const selected = leads.filter(l=>selectedLeads.includes(l._id) && l.phone); if(selected.length===0) return toast.error('No phone numbers'); selected.forEach(l=>window.open(`https://wa.me/${l.phone.replace(/\D/g,'')}?text=${encodeURIComponent('Hi, from LeadConnect!')}`,'_blank')); toast.success(`Opened ${selected.length} chats`); };
   const bulkEmail = () => { const selected = leads.filter(l=>selectedLeads.includes(l._id) && l.email); if(selected.length===0) return toast.error('No emails'); window.location.href = `mailto:${selected.map(l=>l.email).join(',')}?subject=Business Opportunity`; toast.success(`Opened email client`); };
   const updateFollowUp = (id, status) => { const updated = {...followUp, [id]:status}; setFollowUp(updated); localStorage.setItem('leadStrikerFollowUp',JSON.stringify(updated)); toast.success(`Status: ${status}`); };
   const updateNote = (id, note) => { const updated = {...notes, [id]:note}; setNotes(updated); localStorage.setItem('leadStrikerNotes',JSON.stringify(updated)); toast.success('Note saved'); };
   const toggleSelectAll = () => { if(selectedLeads.length===currentLeads.length) setSelectedLeads([]); else setSelectedLeads(currentLeads.map(l=>l._id)); };
   const toggleSelect = (id) => { if(selectedLeads.includes(id)) setSelectedLeads(selectedLeads.filter(i=>i!==id)); else setSelectedLeads([...selectedLeads, id]); };
-  const clearFilters = () => setFilters({ minRating:0, phoneOnly:false, websiteOnly:false, city:'', search:'' });
+  const clearFilters = () => setFilters({ minRating:0, phoneOnly:false, websiteOnly:false, city:'', search:'', source:'all', dateRange:'all' });
 
   const getStatusIcon = (status) => { if(status==='Converted') return <FaCheck className="text-green-600"/>; if(status==='Contacted') return <FaEdit className="text-blue-600"/>; return <FaClock className="text-gray-400"/>; };
   if(loading) return <div className="flex justify-center items-center h-96"><FaSpinner className="animate-spin text-4xl"/> Loading leads...</div>;
 
   return (
     <div className="p-6 max-w-[1600px] mx-auto">
-      <h1 className="text-4xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent mb-6">Sales Outreach</h1>
+      <h1 className="text-4xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent mb-6">Campaign Outreach</h1>
+      
       <div className="bg-white rounded-2xl shadow-lg p-5 mb-6">
-        <div className="flex justify-between items-center mb-3"><h2 className="font-semibold flex items-center gap-2"><FaFilter/> Filters</h2><button onClick={clearFilters} className="text-red-500 text-sm flex items-center gap-1"><FaTimes/> Clear all</button></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div><label className="block text-sm">Min Rating: {filters.minRating}★</label><input type="range" min="0" max="5" step="0.5" value={filters.minRating} onChange={e=>setFilters({...filters, minRating: parseFloat(e.target.value)})} className="w-full"/></div>
-          <div><label className="block text-sm">City filter</label><input type="text" placeholder="e.g., Karachi" value={filters.city} onChange={e=>setFilters({...filters, city: e.target.value})} className="w-full border rounded-lg p-2"/></div>
-          <div><label className="block text-sm">Search by name</label><input type="text" placeholder="Business name" value={filters.search} onChange={e=>setFilters({...filters, search: e.target.value})} className="w-full border rounded-lg p-2"/></div>
-          <div className="flex flex-col gap-2"><label className="flex items-center gap-2"><input type="checkbox" checked={filters.phoneOnly} onChange={e=>setFilters({...filters, phoneOnly: e.target.checked})}/> Has Phone</label><label className="flex items-center gap-2"><input type="checkbox" checked={filters.websiteOnly} onChange={e=>setFilters({...filters, websiteOnly: e.target.checked})}/> Has Website</label></div>
-          <div><label className="block text-sm">Sort by</label><select value={sortBy} onChange={e=>setSortBy(e.target.value)} className="border rounded p-1"><option value="name">Name</option><option value="rating">Rating</option><option value="date">Date</option></select><button onClick={()=>setSortOrder(sortOrder==='asc'?'desc':'asc')} className="ml-2 bg-gray-200 p-1 rounded"><FaSort/> {sortOrder==='asc'?'A-Z':'Z-A'}</button></div>
+        <div className="flex justify-between items-center mb-3"><h2 className="font-semibold flex items-center gap-2"><FaFilter/> Advanced Filters</h2><button onClick={clearFilters} className="text-red-500 text-sm"><FaTimes/> Clear all</button></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div><label>Min Rating: {filters.minRating}★</label><input type="range" min="0" max="5" step="0.5" value={filters.minRating} onChange={e=>setFilters({...filters, minRating: parseFloat(e.target.value)})} className="w-full"/></div>
+          <div><label>City filter</label><input type="text" placeholder="e.g., Karachi" value={filters.city} onChange={e=>setFilters({...filters, city: e.target.value})} className="w-full border rounded-lg p-2"/></div>
+          <div><label>Search by name</label><input type="text" placeholder="Business name" value={filters.search} onChange={e=>setFilters({...filters, search: e.target.value})} className="w-full border rounded-lg p-2"/></div>
+          <div className="flex flex-col gap-2"><label><input type="checkbox" checked={filters.phoneOnly} onChange={e=>setFilters({...filters, phoneOnly: e.target.checked})}/> Has Phone</label><label><input type="checkbox" checked={filters.websiteOnly} onChange={e=>setFilters({...filters, websiteOnly: e.target.checked})}/> Has Website</label></div>
+          <div><label>Lead Source</label><select value={filters.source} onChange={e=>setFilters({...filters, source: e.target.value})} className="border rounded p-1"><option value="all">All</option><option value="google">Google Maps</option><option value="facebook">Facebook</option><option value="email_extracted">Email Extractor</option></select></div>
+          <div><label>Date Range</label><select value={filters.dateRange} onChange={e=>setFilters({...filters, dateRange: e.target.value})} className="border rounded p-1"><option value="all">All time</option><option value="week">Last 7 days</option><option value="month">Last 30 days</option></select></div>
+          <div><label>Sort by</label><select value={sortBy} onChange={e=>setSortBy(e.target.value)} className="border rounded p-1"><option value="name">Name</option><option value="rating">Rating</option><option value="date">Date</option></select><button onClick={()=>setSortOrder(sortOrder==='asc'?'desc':'asc')} className="ml-2 bg-gray-200 p-1 rounded"><FaSort/> {sortOrder==='asc'?'A-Z':'Z-A'}</button></div>
         </div>
       </div>
+
       <div className="bg-white rounded-xl shadow p-3 mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2"><button onClick={toggleSelectAll}>{selectedLeads.length===currentLeads.length?<FaCheckSquare/>:<FaSquare/>}</button><span>{selectedLeads.length} selected</span><button onClick={bulkWhatsApp} className="bg-green-600 text-white px-3 py-1.5 rounded-lg"><FaWhatsapp/> WhatsApp</button><button onClick={bulkEmail} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg"><FaEnvelope/> Email</button><button onClick={bulkDelete} className="bg-red-600 text-white px-3 py-1.5 rounded-lg"><FaTrash/> Delete</button><button onClick={exportExcel} className="bg-purple-600 text-white px-3 py-1.5 rounded-lg"><FaTrash/> Excel</button></div>
+        <div className="flex flex-wrap items-center gap-2"><button onClick={toggleSelectAll}>{selectedLeads.length===currentLeads.length?<FaCheckSquare/>:<FaSquare/>}</button><span>{selectedLeads.length} selected</span><button onClick={bulkWhatsApp} className="bg-green-600 text-white px-3 py-1.5 rounded-lg"><FaWhatsapp/> WhatsApp</button><button onClick={bulkEmail} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg"><FaEnvelope/> Email</button><button onClick={bulkDelete} className="bg-red-600 text-white px-3 py-1.5 rounded-lg"><FaTrash/> Delete</button></div>
+        <div className="flex gap-2"><button onClick={exportCSV} className="bg-gray-600 text-white px-3 py-1 rounded flex items-center gap-1"><FaFileCsv/> CSV</button><button onClick={exportExcel} className="bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1"><FaFileExcel/> Excel</button><button onClick={exportPDF} className="bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1"><FaFilePdf/> PDF</button></div>
         <div className="flex gap-1"><button onClick={()=>setViewMode('cards')} className={`px-3 py-1 rounded ${viewMode==='cards'?'bg-indigo-600 text-white':'bg-gray-200'}`}>Cards</button><button onClick={()=>setViewMode('table')} className={`px-3 py-1 rounded ${viewMode==='table'?'bg-indigo-600 text-white':'bg-gray-200'}`}>Table</button><select value={itemsPerPage} onChange={e=>{setItemsPerPage(Number(e.target.value)); setCurrentPage(1);}} className="border rounded p-1"><option>5</option><option>10</option><option>20</option><option>50</option></select></div>
       </div>
+
       {currentLeads.length===0? <div className="text-center py-16">No leads match filters</div> : viewMode==='cards'? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {currentLeads.map(lead=>(
@@ -92,4 +148,4 @@ const Sales = () => {
     </div>
   );
 };
-export default Sales;
+export default CampaignOutreach;
