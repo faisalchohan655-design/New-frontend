@@ -23,9 +23,9 @@ function App() {
             <Route path="/domain-insights" element={<EmailExtractor />} />
             <Route path="/website-intelligence" element={<WebsiteLeads />} />
             <Route path="/campaign-outreach" element={<Sales />} />
-            <Route path="/conversation-inbox" element={<Sales />} /> {/* placeholder */}
-            <Route path="/crm-pipeline" element={<Dashboard />} />     {/* placeholder */}
-            <Route path="/whatsapp-outreach" element={<Sales />} />    {/* placeholder */}
+            <Route path="/conversation-inbox" element={<Dashboard />} />
+            <Route path="/crm-pipeline" element={<Dashboard />} />
+            <Route path="/whatsapp-outreach" element={<Dashboard />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
