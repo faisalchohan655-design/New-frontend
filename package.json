@@ -16,9 +16,7 @@
     "recharts": "^2.10.3",
     "xlsx": "^0.18.5",
     "lucide-react": "^0.292.0",
-    "react-icons": "^5.0.0",
-    "jspdf": "^2.5.1",
-    "jspdf-autotable": "^3.5.31"
+    "react-icons": "^5.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.0",
