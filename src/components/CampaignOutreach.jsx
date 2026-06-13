@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import api from '../api';
-import { FaWhatsapp, FaEnvelope, FaTrash, FaCheckSquare, FaSquare, FaSort, FaEdit, FaCheck, FaClock, FaFilter, FaTimes, FaSpinner, FaFileExcel, FaFileCsv, FaFilePdf } from 'react-icons/fa';
+import { FaWhatsapp, FaEnvelope, FaTrash, FaCheckSquare, FaSquare, FaSort, FaEdit, FaCheck, FaClock, FaFilter, FaTimes, FaSpinner, FaFileExcel, FaFileCsv } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 const CampaignOutreach = () => {
   const [leads, setLeads] = useState([]);
@@ -116,18 +114,6 @@ const CampaignOutreach = () => {
     toast.success('Excel exported');
   };
 
-  const exportPDF = () => {
-    const doc = new jsPDF();
-    doc.text('Campaign Outreach Report', 14, 16);
-    autoTable(doc, {
-      head: [['Name', 'Phone', 'Email', 'Rating', 'FollowUp']],
-      body: filtered.map(l => [l.name, l.phone, l.email, l.rating, followUp[l._id] || 'Pending']),
-      startY: 20,
-    });
-    doc.save(`campaign_report_${Date.now()}.pdf`);
-    toast.success('PDF exported');
-  };
-
   const bulkWhatsApp = () => {
     const selected = leads.filter(l => selectedLeads.includes(l._id) && l.phone);
     if (selected.length === 0) return toast.error('No phone numbers');
@@ -214,7 +200,6 @@ const CampaignOutreach = () => {
         <div className="flex gap-2">
           <button onClick={exportCSV} className="bg-gray-600 text-white px-3 py-1 rounded flex items-center gap-1"><FaFileCsv /> CSV</button>
           <button onClick={exportExcel} className="bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1"><FaFileExcel /> Excel</button>
-          <button onClick={exportPDF} className="bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1"><FaFilePdf /> PDF</button>
         </div>
         <div className="flex gap-1">
           <button onClick={() => setViewMode('cards')} className={`px-3 py-1 rounded ${viewMode === 'cards' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}>Cards</button>
