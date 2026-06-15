@@ -9,7 +9,6 @@ import {
 } from 'react-icons/fa';
 
 const SocialInsights = () => {
-  // State
   const [activePlatform, setActivePlatform] = useState('facebook');
   const [searchType, setSearchType] = useState('url');
   const [query, setQuery] = useState('');
@@ -23,7 +22,6 @@ const SocialInsights = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Platform configuration
   const platforms = [
     { id: 'facebook', name: 'Facebook', icon: FaFacebook, color: 'bg-blue-600' },
     { id: 'linkedin', name: 'LinkedIn', icon: FaLinkedin, color: 'bg-blue-800' },
@@ -37,7 +35,6 @@ const SocialInsights = () => {
     return platform ? platform.icon : FaSearch;
   };
 
-  // Handle search
   const handleSearch = async () => {
     if (!query.trim()) {
       toast.error('Please enter a URL, keyword, or location');
@@ -70,7 +67,6 @@ const SocialInsights = () => {
     }
   };
 
-  // Save selected leads to database
   const saveToLeads = async () => {
     if (selectedLeads.length === 0) {
       toast.error('No leads selected');
@@ -78,27 +74,27 @@ const SocialInsights = () => {
     }
 
     const leadsToSave = filteredResults.filter((_, idx) => selectedLeads.includes(idx));
-    setLoading(true);
     const toastId = toast.loading(`Saving ${leadsToSave.length} leads...`);
-    
+
     try {
-      await api.post('/social/save-leads', { leads: leadsToSave });
-      toast.success(`Saved ${leadsToSave.length} leads to database`, { id: toastId });
-      setSelectedLeads([]);
+      const response = await api.post('/social/save-leads', { leads: leadsToSave });
+      if (response.data.success) {
+        toast.success(`Saved ${leadsToSave.length} leads to database`, { id: toastId });
+        setSelectedLeads([]);
+      } else {
+        toast.error(response.data.error || 'Failed to save leads', { id: toastId });
+      }
     } catch (error) {
-      toast.error('Failed to save leads', { id: toastId });
-    } finally {
-      setLoading(false);
+      console.error('Save error:', error);
+      toast.error(error.response?.data?.error || 'Failed to save leads', { id: toastId });
     }
   };
 
-  // Delete selected leads (from current results only)
   const deleteSelected = () => {
     if (selectedLeads.length === 0) {
       toast.error('No leads selected');
       return;
     }
-    
     const newResults = filteredResults.filter((_, idx) => !selectedLeads.includes(idx));
     const newSelected = selectedLeads.filter(idx => idx < newResults.length);
     setResults(newResults);
@@ -106,7 +102,6 @@ const SocialInsights = () => {
     toast.success(`${selectedLeads.length} leads removed from results`);
   };
 
-  // Export to CSV
   const exportCSV = () => {
     if (filteredResults.length === 0) {
       toast.error('No data to export');
@@ -141,7 +136,6 @@ const SocialInsights = () => {
     toast.success('CSV exported');
   };
 
-  // Export to Excel
   const exportExcel = () => {
     if (filteredResults.length === 0) {
       toast.error('No data to export');
@@ -166,7 +160,6 @@ const SocialInsights = () => {
     toast.success('Excel exported');
   };
 
-  // Individual actions
   const openWhatsApp = (phone) => {
     if (!phone) {
       toast.error('No phone number available');
@@ -184,7 +177,6 @@ const SocialInsights = () => {
     window.location.href = `mailto:${email}`;
   };
 
-  // Selection handlers
   const toggleSelectAll = () => {
     if (selectedLeads.length === filteredResults.length) {
       setSelectedLeads([]);
@@ -201,13 +193,11 @@ const SocialInsights = () => {
     }
   };
 
-  // Pagination
   const filteredResults = results.filter(r => filterPlatform === 'all' || r.platform === filterPlatform);
   const indexOfLast = currentPage * itemsPerPage;
   const indexOfFirst = indexOfLast - itemsPerPage;
   const currentResults = filteredResults.slice(indexOfFirst, indexOfLast);
   const totalPages = Math.ceil(filteredResults.length / itemsPerPage);
-
   const ActiveIcon = getPlatformIcon(activePlatform);
 
   return (
@@ -237,7 +227,6 @@ const SocialInsights = () => {
 
       {/* Search Section */}
       <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-        {/* Search Type Toggle */}
         <div className="flex gap-4 mb-4">
           {['url', 'keyword', 'location'].map(type => (
             <label key={type} className="flex items-center gap-2 cursor-pointer">
@@ -254,7 +243,6 @@ const SocialInsights = () => {
           ))}
         </div>
 
-        {/* Search Input */}
         <div className="mb-4">
           <div className="relative">
             <ActiveIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
@@ -269,7 +257,6 @@ const SocialInsights = () => {
           </div>
         </div>
 
-        {/* Filters Row */}
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium">Leads:</label>
@@ -319,7 +306,6 @@ const SocialInsights = () => {
           )}
         </div>
 
-        {/* Search Button */}
         <button
           onClick={handleSearch}
           disabled={loading}
@@ -337,7 +323,6 @@ const SocialInsights = () => {
       {/* Results Section */}
       {results.length > 0 && (
         <>
-          {/* Action Bar */}
           <div className="bg-white rounded-xl shadow p-3 mb-6 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-2">
               <button
@@ -388,7 +373,6 @@ const SocialInsights = () => {
             </div>
           </div>
 
-          {/* Results Table */}
           <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50">
@@ -433,7 +417,7 @@ const SocialInsights = () => {
                         {lead.website ? (
                           <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate max-w-[150px] block">
                             Visit
-                          </a>
+          <button onClick={() => deleteLead(lead._id)} className="text-red-500">🗑️</button>                         </a>
                         ) : '-'}
                       </td>
                       <td className="p-3">{lead.followers?.toLocaleString() || '-'}</td>
@@ -457,14 +441,13 @@ const SocialInsights = () => {
                           )}
                         </div>
                       </td>
-                    </table>
+                    </tr>
                   );
                 })}
               </tbody>
             </table>
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center gap-3 mt-6">
               <button
@@ -474,9 +457,7 @@ const SocialInsights = () => {
               >
                 ◀ Prev
               </button>
-              <span className="px-4 py-2 text-sm">
-                Page {currentPage} of {totalPages}
-              </span>
+              <span className="px-4 py-2 text-sm">Page {currentPage} of {totalPages}</span>
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
@@ -493,4 +474,3 @@ const SocialInsights = () => {
 };
 
 export default SocialInsights;
-      
