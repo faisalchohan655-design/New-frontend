@@ -2,10 +2,10 @@ import { useState } from 'react';
 import api from '../api';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
-import { 
-  FaFacebook, FaLinkedin, FaInstagram, FaReddit, FaTiktok, 
-  FaSearch, FaDownload, FaSave, FaTrash, FaWhatsapp, 
-  FaEnvelope, FaEye, FaCheckSquare, FaSquare 
+import {
+  FaFacebook, FaLinkedin, FaInstagram, FaReddit, FaTiktok,
+  FaSearch, FaDownload, FaSave, FaTrash, FaWhatsapp,
+  FaEnvelope, FaEye, FaCheckSquare, FaSquare
 } from 'react-icons/fa';
 
 const SocialInsights = () => {
@@ -40,6 +40,16 @@ const SocialInsights = () => {
       toast.error('Please enter a URL, keyword, or location');
       return;
     }
+
+    // Debug: log what we are sending
+    console.log('🔍 Sending search request:', {
+      platform: activePlatform,
+      searchType,
+      query: query.trim(),
+      count,
+      deepCrawl,
+      verifiedOnly
+    });
 
     setLoading(true);
     const toastId = toast.loading(`Searching ${activePlatform}...`);
@@ -417,7 +427,7 @@ const SocialInsights = () => {
                         {lead.website ? (
                           <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate max-w-[150px] block">
                             Visit
-          <button onClick={() => deleteLead(lead._id)} className="text-red-500">🗑️</button>                         </a>
+                          </a>
                         ) : '-'}
                       </td>
                       <td className="p-3">{lead.followers?.toLocaleString() || '-'}</td>
