@@ -82,10 +82,14 @@ const SocialInsights = () => {
     try {
       const response = await api.post('/social/save-leads', { leads: leadsToSave });
       if (response.data.success) {
-        toast.success(`Saved ${leadsToSave.length} leads to database`, { id: toastId });
+        toast.success(`Saved ${response.data.saved || leadsToSave.length} leads to database`, { id: toastId });
         setSelectedLeads([]);
-        // ✅ Redirect to Leads page to see saved leads immediately
+        // ✅ Navigate to Leads page after save
         navigate('/leads');
+        // ✅ Force refresh after navigation
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
       } else {
         toast.error(response.data.error || 'Failed to save leads', { id: toastId });
       }
