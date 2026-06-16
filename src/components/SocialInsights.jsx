@@ -70,46 +70,41 @@ const SocialInsights = () => {
     }
   };
 
-  // ✅ SAVE FUNCTION WITH FULL DEBUG LOGS
+  // ✅ SAVE FUNCTION – Auto-selects all if nothing selected
   const saveToLeads = async () => {
-    console.log('🚀🚀🚀 SAVE TO LEADS BUTTON CLICKED! 🚀🚀🚀');
-    console.log('Selected leads indices:', selectedLeads);
-    console.log('Filtered results:', filteredResults);
-    console.log('Selected leads count:', selectedLeads.length);
-
+    console.log('🚀 SAVE TO LEADS CLICKED');
+    
     if (selectedLeads.length === 0) {
-      toast.error('No leads selected');
+      console.log('⚠️ No leads selected – saving ALL results');
+      const allIndices = filteredResults.map((_, idx) => idx);
+      setSelectedLeads(allIndices);
+      setTimeout(() => saveToLeads(), 100);
       return;
     }
 
     const leadsToSave = filteredResults.filter((_, idx) => selectedLeads.includes(idx));
-    console.log('Leads to save (full data):', leadsToSave);
-    console.log('Number of leads to save:', leadsToSave.length);
-
+    console.log(`💾 Saving ${leadsToSave.length} leads`);
+    
     if (leadsToSave.length === 0) {
-      toast.error('No valid leads to save');
+      toast.error('No leads to save');
       return;
     }
 
     const toastId = toast.loading(`Saving ${leadsToSave.length} leads...`);
 
     try {
-      console.log('📤 Sending POST request to /leads/bulk');
       const response = await api.post('/leads/bulk', { leads: leadsToSave });
-      console.log('📥 Response from server:', response.data);
-
+      console.log('✅ Save response:', response.data);
+      
       if (response.data.success) {
         toast.success(`✅ Saved ${response.data.saved || leadsToSave.length} leads!`, { id: toastId });
         setSelectedLeads([]);
-        console.log('🔁 Redirecting to Dashboard...');
         navigate('/dashboard');
       } else {
-        console.error('❌ Server returned error:', response.data.error);
         toast.error(response.data.error || 'Failed to save leads', { id: toastId });
       }
     } catch (error) {
-      console.error('❌ Save error details:', error);
-      console.error('Error response:', error.response?.data);
+      console.error('❌ Save error:', error);
       toast.error(error.response?.data?.error || 'Failed to save leads', { id: toastId });
     }
   };
@@ -120,9 +115,8 @@ const SocialInsights = () => {
       return;
     }
     const newResults = filteredResults.filter((_, idx) => !selectedLeads.includes(idx));
-    const newSelected = selectedLeads.filter(idx => idx < newResults.length);
     setResults(newResults);
-    setSelectedLeads(newSelected);
+    setSelectedLeads([]);
     toast.success(`${selectedLeads.length} leads removed from results`);
   };
 
