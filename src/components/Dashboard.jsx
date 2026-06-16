@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import api from '../api';
 import { Users, Star, Phone, Globe, Award, TrendingUp } from 'lucide-react';
 
 const Dashboard = () => {
+  const location = useLocation();
   const [leads, setLeads] = useState([]);
   const [stats, setStats] = useState({ total: 0, avgRating: 0, withPhone: 0, withWebsite: 0, highRated: 0 });
 
@@ -24,9 +26,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchLeads();
-  }, []);
+  }, [location.key]);
 
-  // Last 7 days data
   const last7Days = [...Array(7)].map((_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (6 - i));
     return d.toISOString().slice(0, 10);
