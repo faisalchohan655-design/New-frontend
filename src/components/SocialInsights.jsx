@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
@@ -9,6 +10,8 @@ import {
 } from 'react-icons/fa';
 
 const SocialInsights = () => {
+  const navigate = useNavigate();
+
   const [activePlatform, setActivePlatform] = useState('facebook');
   const [searchType, setSearchType] = useState('url');
   const [query, setQuery] = useState('');
@@ -40,16 +43,6 @@ const SocialInsights = () => {
       toast.error('Please enter a URL, keyword, or location');
       return;
     }
-
-    // Debug: log what we are sending
-    console.log('🔍 Sending search request:', {
-      platform: activePlatform,
-      searchType,
-      query: query.trim(),
-      count,
-      deepCrawl,
-      verifiedOnly
-    });
 
     setLoading(true);
     const toastId = toast.loading(`Searching ${activePlatform}...`);
@@ -91,6 +84,8 @@ const SocialInsights = () => {
       if (response.data.success) {
         toast.success(`Saved ${leadsToSave.length} leads to database`, { id: toastId });
         setSelectedLeads([]);
+        // ✅ Redirect to Leads page to see saved leads immediately
+        navigate('/leads');
       } else {
         toast.error(response.data.error || 'Failed to save leads', { id: toastId });
       }
