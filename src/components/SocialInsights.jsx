@@ -82,12 +82,10 @@ const SocialInsights = () => {
     try {
       const response = await api.post('/social/save-leads', { leads: leadsToSave });
       if (response.data.success) {
-        toast.success(`Saved ${response.data.saved || leadsToSave.length} leads to database`, { id: toastId });
+        const savedCount = response.data.saved || leadsToSave.length;
+        toast.success(`Saved ${savedCount} leads to database`, { id: toastId });
         setSelectedLeads([]);
-        navigate('/leads');
-        setTimeout(() => {
-          window.location.reload();
-        }, 100);
+        navigate('/dashboard');
       } else {
         toast.error(response.data.error || 'Failed to save leads', { id: toastId });
       }
@@ -214,13 +212,11 @@ const SocialInsights = () => {
       </h1>
       <p className="text-gray-500 mb-6">Professional social media intelligence for lead generation</p>
 
-      {/* Page Header with Social Media Icon */}
       <div className="flex items-center gap-3 mb-6">
         <FaShareAlt className="text-4xl text-indigo-600" />
         <span className="text-2xl font-semibold text-gray-700">Social Media Intelligence</span>
       </div>
 
-      {/* Platform Tabs */}
       <div className="flex flex-wrap gap-2 mb-6">
         {platforms.map(platform => (
           <button
@@ -238,7 +234,6 @@ const SocialInsights = () => {
         ))}
       </div>
 
-      {/* Search Section */}
       <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
         <div className="flex gap-4 mb-4">
           {['url', 'keyword', 'location'].map(type => (
@@ -333,7 +328,6 @@ const SocialInsights = () => {
         </button>
       </div>
 
-      {/* Results Section */}
       {results.length > 0 && (
         <>
           <div className="bg-white rounded-xl shadow p-3 mb-6 flex flex-wrap items-center justify-between gap-3">
