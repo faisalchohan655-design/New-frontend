@@ -102,11 +102,11 @@ const SocialInsights = () => {
   };
 
   const exportCSV = () => {
-    // ... (keep existing export functions)
+    // ... (keep existing)
   };
 
   const exportExcel = () => {
-    // ... (keep existing export functions)
+    // ... (keep existing)
   };
 
   const openWhatsApp = (phone) => {
@@ -294,18 +294,6 @@ const SocialInsights = () => {
                 className="bg-red-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm"
               >
                 <FaTrash size={14} /> Delete
-              </button>
-              <button
-                onClick={exportCSV}
-                className="bg-gray-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm"
-              >
-                <FaDownload size={14} /> CSV
-              </button>
-              <button
-                onClick={exportExcel}
-                className="bg-green-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm"
-              >
-                <FaDownload size={14} /> Excel
               </button>
             </div>
             <div className="flex items-center gap-3">
