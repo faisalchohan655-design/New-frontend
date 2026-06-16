@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import {
   FaFacebook, FaLinkedin, FaInstagram, FaReddit, FaTiktok,
   FaSearch, FaDownload, FaSave, FaTrash, FaWhatsapp,
-  FaEnvelope, FaEye, FaCheckSquare, FaSquare
+  FaEnvelope, FaEye, FaCheckSquare, FaSquare, FaShareAlt
 } from 'react-icons/fa';
 
 const SocialInsights = () => {
@@ -84,9 +84,7 @@ const SocialInsights = () => {
       if (response.data.success) {
         toast.success(`Saved ${response.data.saved || leadsToSave.length} leads to database`, { id: toastId });
         setSelectedLeads([]);
-        // ✅ Navigate to Leads page after save
         navigate('/leads');
-        // ✅ Force refresh after navigation
         setTimeout(() => {
           window.location.reload();
         }, 100);
@@ -215,6 +213,12 @@ const SocialInsights = () => {
         Social Insights
       </h1>
       <p className="text-gray-500 mb-6">Professional social media intelligence for lead generation</p>
+
+      {/* Page Header with Social Media Icon */}
+      <div className="flex items-center gap-3 mb-6">
+        <FaShareAlt className="text-4xl text-indigo-600" />
+        <span className="text-2xl font-semibold text-gray-700">Social Media Intelligence</span>
+      </div>
 
       {/* Platform Tabs */}
       <div className="flex flex-wrap gap-2 mb-6">
