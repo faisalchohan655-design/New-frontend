@@ -7,24 +7,29 @@ const Dashboard = () => {
   const [leads, setLeads] = useState([]);
   const [stats, setStats] = useState({ total: 0, avgRating: 0, withPhone: 0, withWebsite: 0, highRated: 0 });
 
+  const fetchLeads = async () => {
+    try {
+      const res = await api.get('/leads');
+      setLeads(res.data);
+      const total = res.data.length;
+      const avgRating = total ? (res.data.reduce((s, l) => s + (l.rating || 0), 0) / total).toFixed(1) : 0;
+      const withPhone = res.data.filter(l => l.phone && l.phone.trim()).length;
+      const withWebsite = res.data.filter(l => l.website && l.website.trim()).length;
+      const highRated = res.data.filter(l => (l.rating || 0) >= 4).length;
+      setStats({ total, avgRating, withPhone, withWebsite, highRated });
+    } catch (err) {
+      console.error('Failed to fetch leads:', err);
+    }
+  };
+
   useEffect(() => {
-    api.get('/leads')
-      .then(res => {
-        setLeads(res.data);
-        const total = res.data.length;
-        const avgRating = total ? (res.data.reduce((s, l) => s + (l.rating || 0), 0) / total).toFixed(1) : 0;
-        const withPhone = res.data.filter(l => l.phone && l.phone.trim()).length;
-        const withWebsite = res.data.filter(l => l.website && l.website.trim()).length;
-        const highRated = res.data.filter(l => (l.rating || 0) >= 4).length;
-        setStats({ total, avgRating, withPhone, withWebsite, highRated });
-      })
-      .catch(console.error);
+    fetchLeads();
   }, []);
 
   // Last 7 days data
   const last7Days = [...Array(7)].map((_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (6 - i));
-    return d.toISOString().slice(0,10);
+    return d.toISOString().slice(0, 10);
   });
   const chartData = last7Days.map(date => ({
     date: date.slice(5),
