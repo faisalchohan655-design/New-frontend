@@ -3,10 +3,10 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Scrape from './components/Scrape';
 import SocialInsights from './components/SocialInsights';
-import EmailExtractor from './components/EmailExtractor';
-import WebsiteLeads from './components/WebsiteLeads';
-import Sales from './components/Sales';
-import Settings from './components/Settings';
+import EmailExtractor from './components/EmailExtractor.jsx';
+import WebsiteLeads from './components/WebsiteLeads.jsx';
+import Sales from './components/Sales.jsx';
+import Settings from './components/Settings.jsx';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
