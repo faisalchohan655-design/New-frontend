@@ -126,7 +126,7 @@ const LocalBusinessInsights = () => {
             <input type="number" min="1" max="50" value={count} onChange={e => setCount(parseInt(e.target.value))} className="w-full border rounded-xl p-2" required />
           </div>
 
-          {/* ✅ Quality Filters – Restored */}
+          {/* ✅ Quality Filters */}
           <div className="border-t pt-4">
             <h3 className="font-semibold text-gray-700 mb-3">Quality Filters (Optional)</h3>
             <div className="flex flex-wrap gap-4">
