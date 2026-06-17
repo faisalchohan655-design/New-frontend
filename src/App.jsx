@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import Dashboard from './components/Dashboard';
-import Scrape from './components/Scrape';
-import SocialInsights from './components/SocialInsights';
+import Sidebar from './components/Sidebar.jsx';
+import Dashboard from './components/Dashboard.jsx';
+import Scrape from './components/Scrape.jsx';
+import SocialInsights from './components/SocialInsights.jsx';
 import EmailExtractor from './components/EmailExtractor.jsx';
 import WebsiteLeads from './components/WebsiteLeads.jsx';
 import Sales from './components/Sales.jsx';
