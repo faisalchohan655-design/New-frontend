@@ -19,6 +19,7 @@ const SocialInsights = () => {
   const [deepCrawl, setDeepCrawl] = useState(false);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [results, setResults] = useState([]);
   const [selectedLeads, setSelectedLeads] = useState([]);
   const [filterPlatform, setFilterPlatform] = useState('all');
@@ -70,7 +71,7 @@ const SocialInsights = () => {
     }
   };
 
-  // ✅ FIXED: Saves ALL results using /leads/bulk
+  // ✅ FIXED: Saves ALL results with loading state
   const saveToLeads = async () => {
     console.log('🚀 SAVE TO LEADS CLICKED');
     console.log('Total results:', results.length);
@@ -80,15 +81,18 @@ const SocialInsights = () => {
       return;
     }
 
+    if (saving) return;
+    setSaving(true);
+
     const toastId = toast.loading(`Saving ${results.length} leads...`);
 
     try {
-      // ✅ CORRECT ENDPOINT – matches backend route
       const response = await api.post('/leads/bulk', { leads: results });
       console.log('✅ Save response:', response.data);
 
       if (response.data.success) {
-        toast.success(`✅ Saved ${response.data.saved || results.length} leads!`, { id: toastId });
+        const savedCount = response.data.saved || results.length;
+        toast.success(`✅ Saved ${savedCount} leads!`, { id: toastId });
         setResults([]);
         setSelectedLeads([]);
         navigate('/dashboard');
@@ -98,6 +102,8 @@ const SocialInsights = () => {
     } catch (error) {
       console.error('❌ Save error:', error);
       toast.error(error.response?.data?.error || 'Failed to save leads', { id: toastId });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -347,9 +353,10 @@ const SocialInsights = () => {
               </button>
               <button
                 onClick={saveToLeads}
+                disabled={saving}
                 className="bg-blue-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm"
               >
-                <FaSave size={14} /> Save to Leads
+                <FaSave size={14} /> {saving ? 'Saving...' : 'Save to Leads'}
               </button>
               <button
                 onClick={deleteSelected}
