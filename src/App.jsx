@@ -5,7 +5,7 @@ import Scrape from './components/Scrape.jsx';
 import SocialInsights from './components/SocialInsights.jsx';
 import EmailExtractor from './components/EmailExtractor.jsx';
 import WebsiteLeads from './components/WebsiteLeads.jsx';
-import Sales from './components/Sales.jsx';
+import CampaignOutreach from './components/CampaignOutreach.jsx';
 import Settings from './components/Settings.jsx';
 import { Toaster } from 'react-hot-toast';
 
@@ -22,7 +22,7 @@ function App() {
             <Route path="/social-insights" element={<SocialInsights />} />
             <Route path="/domain-insights" element={<EmailExtractor />} />
             <Route path="/website-intelligence" element={<WebsiteLeads />} />
-            <Route path="/campaign-outreach" element={<Sales />} />
+            <Route path="/campaign-outreach" element={<CampaignOutreach />} />
             <Route path="/conversation-inbox" element={<Dashboard />} />
             <Route path="/crm-pipeline" element={<Dashboard />} />
             <Route path="/whatsapp-outreach" element={<Dashboard />} />
