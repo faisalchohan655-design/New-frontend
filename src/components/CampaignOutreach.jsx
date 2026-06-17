@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api';
-import { FaWhatsapp, FaEnvelope, FaTrash, FaCheckSquare, FaSquare, FaFileExcel, FaFileCsv, FaSave } from 'react-icons/fa';
+import { FaWhatsapp, FaEnvelope, FaTrash, FaCheckSquare, FaSquare, FaFileExcel, FaFileCsv, FaSave, FaCopy } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 
@@ -10,6 +10,9 @@ const CampaignOutreach = () => {
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [viewMode, setViewMode] = useState('table');
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({ search: '', city: '', minRating: 0, source: 'all' });
 
   useEffect(() => {
@@ -26,7 +29,13 @@ const CampaignOutreach = () => {
     if (filters.source !== 'all') r = r.filter(l => (l.source || 'google').toLowerCase() === filters.source.toLowerCase());
     setFiltered(r);
     setSelected([]);
+    setCurrentPage(1);
   }, [filters, leads]);
+
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentLeads = filtered.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
 
   const deleteLead = async (id) => {
     if (window.confirm('Delete this lead?')) {
@@ -44,28 +53,39 @@ const CampaignOutreach = () => {
     toast.success(`${selected.length} leads deleted`);
   };
 
-  // ✅ NEW: Save ALL leads to database
+  // ✅ Copy Selected URLs
+  const copySelectedUrls = () => {
+    const selectedLeads = filtered.filter(l => selected.includes(l._id));
+    if (selectedLeads.length === 0) {
+      toast.error('No leads selected');
+      return;
+    }
+    const urls = selectedLeads.map(l => l.website).filter(url => url && url.trim()).join('\n');
+    if (!urls) {
+      toast.error('No websites found for selected leads');
+      return;
+    }
+    navigator.clipboard.writeText(urls);
+    toast.success(`Copied ${urls.split('\n').length} URLs to clipboard`);
+  };
+
   const saveAllLeads = async () => {
     if (filtered.length === 0) {
       toast.error('No leads to save');
       return;
     }
-
     if (saving) return;
     setSaving(true);
     const toastId = toast.loading(`Saving ${filtered.length} leads...`);
-
     try {
       const response = await api.post('/leads/bulk', { leads: filtered });
       if (response.data.success) {
         toast.success(`✅ Saved ${response.data.saved || filtered.length} leads!`, { id: toastId });
-        setSelected([]);
       } else {
         toast.error(response.data.error || 'Failed to save leads', { id: toastId });
       }
     } catch (error) {
-      console.error('Save error:', error);
-      toast.error(error.response?.data?.error || 'Failed to save leads', { id: toastId });
+      toast.error('Failed to save leads', { id: toastId });
     } finally {
       setSaving(false);
     }
@@ -87,8 +107,8 @@ const CampaignOutreach = () => {
 
   const exportCSV = () => {
     if (filtered.length === 0) return toast.error('No data to export');
-    const headers = ['Name', 'Phone', 'Email', 'Rating', 'Source'];
-    const rows = filtered.map(l => [l.name, l.phone, l.email, l.rating, l.source || 'Google']);
+    const headers = ['Name', 'Contact', 'Phone', 'Email', 'Rating', 'Source', 'Website'];
+    const rows = filtered.map(l => [l.name, l.contactPerson || '', l.phone, l.email, l.rating, l.source || 'Google', l.website || '']);
     let csvContent = headers.join(',') + '\n';
     rows.forEach(row => {
       const escaped = row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',');
@@ -106,7 +126,13 @@ const CampaignOutreach = () => {
 
   const exportExcel = () => {
     const data = filtered.map(l => ({
-      Name: l.name, Phone: l.phone, Email: l.email, Rating: l.rating, Source: l.source || 'Google'
+      Name: l.name,
+      Contact: l.contactPerson || '',
+      Phone: l.phone,
+      Email: l.email,
+      Rating: l.rating,
+      Source: l.source || 'Google',
+      Website: l.website || ''
     }));
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -116,8 +142,8 @@ const CampaignOutreach = () => {
   };
 
   const toggleSelectAll = () => {
-    if (selected.length === filtered.length) setSelected([]);
-    else setSelected(filtered.map(l => l._id));
+    if (selected.length === currentLeads.length) setSelected([]);
+    else setSelected(currentLeads.map(l => l._id));
   };
 
   const toggleSelect = (id) => {
@@ -159,14 +185,17 @@ const CampaignOutreach = () => {
         </div>
       </div>
 
-      {/* Action Buttons – All icons same size (18px) and same line */}
+      {/* Action Buttons – All icons same size (18px) same line */}
       <div className="bg-white rounded-xl shadow p-3 mb-6 flex flex-wrap items-center justify-between">
         <div className="flex flex-wrap gap-2 items-center">
           <button onClick={toggleSelectAll} className="bg-gray-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm">
             <FaCheckSquare size={18} /> Select All
           </button>
           <button onClick={saveAllLeads} disabled={saving} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm">
-            <FaSave size={18} /> {saving ? 'Saving...' : 'Save All Leads'}
+            <FaSave size={18} /> {saving ? 'Saving...' : 'Save All'}
+          </button>
+          <button onClick={copySelectedUrls} className="bg-cyan-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm">
+            <FaCopy size={18} /> Copy URLs
           </button>
           <button onClick={bulkWhatsApp} className="bg-green-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm">
             <FaWhatsapp size={18} /> WhatsApp
@@ -196,41 +225,80 @@ const CampaignOutreach = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="p-3"><button onClick={toggleSelectAll}>{selected.length === filtered.length ? <FaCheckSquare size={16} /> : <FaSquare size={16} />}</button></th>
-              <th>Name</th>
-              <th>Contact</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Rating</th>
-              <th>Source</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(lead => (
-              <tr key={lead._id} className="border-t hover:bg-gray-50">
-                <td className="p-3"><input type="checkbox" checked={selected.includes(lead._id)} onChange={() => toggleSelect(lead._id)} /></td>
-                <td className="p-3 font-medium">{lead.name}</td>
-                <td className="p-3">{lead.contactPerson || '-'}</td>
-                <td className="p-3">{lead.phone || '-'}</td>
-                <td className="p-3">{lead.email || '-'}</td>
-                <td className="p-3">{lead.rating || '-'}</td>
-                <td className="p-3">{lead.source || 'Google'}</td>
-                <td className="p-3 flex gap-2 items-center">
+      {/* Leads Display */}
+      {currentLeads.length === 0 ? (
+        <div className="text-center py-16">No leads match filters</div>
+      ) : viewMode === 'cards' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {currentLeads.map(lead => (
+            <div key={lead._id} className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-2">
+                  <button onClick={() => toggleSelect(lead._id)}>
+                    {selected.includes(lead._id) ? <FaCheckSquare className="text-indigo-600" /> : <FaSquare className="text-gray-400" />}
+                  </button>
+                  <h3 className="font-bold">{lead.name}</h3>
+                </div>
+                <button onClick={() => deleteLead(lead._id)} className="text-red-500"><FaTrash size={16} /></button>
+              </div>
+              <p className="text-gray-500 text-sm">{lead.address || 'No address'}</p>
+              <div className="flex justify-between items-center mt-2">
+                <span>{lead.rating || 'N/A'}★</span>
+                <div className="flex gap-2">
                   {lead.phone && <a href={`https://wa.me/${lead.phone.replace(/\D/g, '')}`} target="_blank" className="text-green-600"><FaWhatsapp size={18} /></a>}
                   {lead.email && <a href={`mailto:${lead.email}`} className="text-blue-600"><FaEnvelope size={18} /></a>}
-                  <button onClick={() => deleteLead(lead._id)} className="text-red-500"><FaTrash size={18} /></button>
-                </td>
+                  {lead.website && <a href={lead.website} target="_blank" className="text-purple-600"><FaEye size={18} /></a>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="p-3"><button onClick={toggleSelectAll}>{selected.length === currentLeads.length ? <FaCheckSquare size={16} /> : <FaSquare size={16} />}</button></th>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Rating</th>
+                <th>Source</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {currentLeads.map(lead => (
+                <tr key={lead._id} className="border-t hover:bg-gray-50">
+                  <td className="p-3"><input type="checkbox" checked={selected.includes(lead._id)} onChange={() => toggleSelect(lead._id)} /></td>
+                  <td className="p-3 font-medium">{lead.name}</td>
+                  <td className="p-3">{lead.contactPerson || '-'}</td>
+                  <td className="p-3">{lead.phone || '-'}</td>
+                  <td className="p-3">{lead.email || '-'}</td>
+                  <td className="p-3">{lead.rating || '-'}</td>
+                  <td className="p-3">{lead.source || 'Google'}</td>
+                  <td className="p-3 flex gap-2 items-center">
+                    {lead.phone && <a href={`https://wa.me/${lead.phone.replace(/\D/g, '')}`} target="_blank" className="text-green-600"><FaWhatsapp size={18} /></a>}
+                    {lead.email && <a href={`mailto:${lead.email}`} className="text-blue-600"><FaEnvelope size={18} /></a>}
+                    {lead.website && <a href={lead.website} target="_blank" className="text-purple-600"><FaEye size={18} /></a>}
+                    <button onClick={() => deleteLead(lead._id)} className="text-red-500"><FaTrash size={18} /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-3 mt-6">
+          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-3 py-1 bg-gray-200 rounded">Prev</button>
+          <span className="text-sm">Page {currentPage} of {totalPages}</span>
+          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-3 py-1 bg-gray-200 rounded">Next</button>
+        </div>
+      )}
     </div>
   );
 };
