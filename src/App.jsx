@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Scrape from './components/Scrape';
-import FacebookScrape from './components/FacebookScrape';
+import SocialInsights from './components/SocialInsights';
 import EmailExtractor from './components/EmailExtractor';
 import WebsiteLeads from './components/WebsiteLeads';
 import Sales from './components/Sales';
@@ -19,7 +19,7 @@ function App() {
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/local-business-insights" element={<Scrape />} />
-            <Route path="/social-insights" element={<FacebookScrape />} />
+            <Route path="/social-insights" element={<SocialInsights />} />
             <Route path="/domain-insights" element={<EmailExtractor />} />
             <Route path="/website-intelligence" element={<WebsiteLeads />} />
             <Route path="/campaign-outreach" element={<Sales />} />
