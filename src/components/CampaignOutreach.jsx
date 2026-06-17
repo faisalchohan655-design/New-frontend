@@ -185,7 +185,7 @@ const CampaignOutreach = () => {
         </div>
       </div>
 
-      {/* Action Bar */}
+      {/* Action Buttons – All icons same size (18px) same line */}
       <div className="bg-white rounded-xl shadow p-3 mb-6 flex flex-wrap items-center justify-between">
         <div className="flex flex-wrap gap-2 items-center">
           <button onClick={toggleSelectAll} className="bg-gray-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm">
@@ -194,6 +194,7 @@ const CampaignOutreach = () => {
           <button onClick={saveAllLeads} disabled={saving} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm">
             <FaSave size={18} /> {saving ? 'Saving...' : 'Save All'}
           </button>
+          {/* ✅ COPY SELECTED URLS BUTTON */}
           <button onClick={copySelectedUrls} className="bg-cyan-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm">
             <FaCopy size={18} /> Copy URLs
           </button>
@@ -225,7 +226,7 @@ const CampaignOutreach = () => {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Leads Display */}
       {currentLeads.length === 0 ? (
         <div className="text-center py-16">No leads match filters</div>
       ) : viewMode === 'cards' ? (
@@ -291,6 +292,7 @@ const CampaignOutreach = () => {
         </div>
       )}
 
+      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center gap-3 mt-6">
           <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-3 py-1 bg-gray-200 rounded">Prev</button>
