@@ -108,6 +108,7 @@ const LocalBusinessInsights = () => {
     <div className="p-6 max-w-7xl mx-auto">
       <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">Local Business Insights</h1>
 
+      {/* Input Form with Quality Filters */}
       <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
         <form onSubmit={handleScrape} className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
@@ -124,11 +125,27 @@ const LocalBusinessInsights = () => {
             <label className="block text-sm font-medium">Number of Results (max 50)</label>
             <input type="number" min="1" max="50" value={count} onChange={e => setCount(parseInt(e.target.value))} className="w-full border rounded-xl p-2" required />
           </div>
-          <div className="flex flex-wrap gap-4">
-            <label className="flex items-center gap-2"><input type="checkbox" checked={requireEmail} onChange={() => setRequireEmail(!requireEmail)} /> Must have Email</label>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={requirePhone} onChange={() => setRequirePhone(!requirePhone)} /> Must have Phone</label>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={requireWebsite} onChange={() => setRequireWebsite(!requireWebsite)} /> Must have Website</label>
+
+          {/* ✅ Quality Filters – Restored */}
+          <div className="border-t pt-4">
+            <h3 className="font-semibold text-gray-700 mb-3">Quality Filters (Optional)</h3>
+            <div className="flex flex-wrap gap-4">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={requireEmail} onChange={() => setRequireEmail(!requireEmail)} />
+                Must have Email
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={requirePhone} onChange={() => setRequirePhone(!requirePhone)} />
+                Must have Phone
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={requireWebsite} onChange={() => setRequireWebsite(!requireWebsite)} />
+                Must have Website
+              </label>
+            </div>
+            <p className="text-xs text-gray-400 mt-2">Enable to save only leads with selected contact information.</p>
           </div>
+
           <button type="submit" disabled={loading} className="bg-indigo-600 text-white px-6 py-2 rounded-xl flex items-center gap-2">
             {loading ? <Loader2 className="animate-spin" /> : <Search />}
             {loading ? 'Fetching...' : 'Get Insights'}
@@ -136,8 +153,10 @@ const LocalBusinessInsights = () => {
         </form>
       </div>
 
+      {/* Results Table */}
       {leads.length > 0 && (
         <>
+          {/* Filters for displayed results */}
           <div className="bg-white p-4 rounded-xl shadow mb-4">
             <div className="flex flex-wrap gap-4 items-end">
               <div>
@@ -156,6 +175,7 @@ const LocalBusinessInsights = () => {
             </div>
           </div>
 
+          {/* Action Buttons */}
           <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-xl shadow mb-4">
             <div className="flex gap-2">
               <button onClick={toggleSelectAll} className="bg-gray-600 text-white px-3 py-1 rounded">Select All</button>
@@ -168,6 +188,7 @@ const LocalBusinessInsights = () => {
             <div className="text-sm">{selectedIds.length} selected / {filteredLeads.length} total</div>
           </div>
 
+          {/* Table */}
           <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-100">
