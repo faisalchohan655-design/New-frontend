@@ -1,36 +1,33 @@
 import { useState } from 'react';
-import toast from 'react-hot-toast';
 import api from '../api';
 import * as XLSX from 'xlsx';
+import toast from 'react-hot-toast';
+import { FaSearch, FaSave, FaTrash, FaDownload, FaCheckSquare, FaSquare, FaFileExcel, FaFileCsv } from 'react-icons/fa';
 
-const EmailExtractor = () => {
+const DomainInsights = () => {
   const [singleUrl, setSingleUrl] = useState('');
   const [bulkUrls, setBulkUrls] = useState('');
   const [deep, setDeep] = useState(false);
-  const [maxPages, setMaxPages] = useState(10);
-  const [extractedLeads, setExtractedLeads] = useState([]);
-  const [filteredLeads, setFilteredLeads] = useState([]);
+  const [maxPages, setMaxPages] = useState(5);
+  const [extracted, setExtracted] = useState([]);
+  const [selected, setSelected] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [filterVerified, setFilterVerified] = useState(false);
   const [filterDomain, setFilterDomain] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [selectedEmails, setSelectedEmails] = useState([]);
-  const [selectAll, setSelectAll] = useState(false);
-  const [showSendModal, setShowSendModal] = useState(false);
-  const [emailSubject, setEmailSubject] = useState('');
-  const [emailMessage, setEmailMessage] = useState('');
 
   const handleExtract = async () => {
-    const hasSingle = singleUrl.trim();
-    const hasBulk = bulkUrls.trim();
-    if (!hasSingle && !hasBulk) {
-      toast.error('Enter at least one URL');
+    if (!singleUrl && !bulkUrls) {
+      toast.error('Enter URL(s)');
       return;
     }
+
     setLoading(true);
-    const toastId = toast.loading('Extracting emails...');
+    const toastId = toast.loading('Extracting emails & phones...');
+
     try {
       let response;
-      if (hasBulk) {
+      if (bulkUrls) {
         const urls = bulkUrls.split('\n').filter(u => u.trim());
         if (urls.length === 0) throw new Error('No valid URLs');
         response = await api.post('/email/bulk-extract', {
@@ -45,9 +42,10 @@ const EmailExtractor = () => {
           maxPages
         });
       }
+
       const leads = response.data.leads || [];
-      setExtractedLeads(leads);
-      setFilteredLeads(leads);
+      setExtracted(leads);
+      setSelected([]);
       toast.success(`Found ${leads.length} emails`, { id: toastId });
     } catch (err) {
       toast.error(err.response?.data?.error || 'Extraction failed', { id: toastId });
@@ -56,138 +54,204 @@ const EmailExtractor = () => {
     }
   };
 
-  const applyFilters = () => {
-    let filtered = [...extractedLeads];
-    if (filterVerified) filtered = filtered.filter(l => l.verified);
-    if (filterDomain) filtered = filtered.filter(l => l.email.endsWith('@' + filterDomain));
-    setFilteredLeads(filtered);
-    setSelectedEmails([]);
-    setSelectAll(false);
+  const saveSelected = async () => {
+    if (selected.length === 0) {
+      toast.error('No leads selected');
+      return;
+    }
+
+    const leadsToSave = extracted.filter((_, idx) => selected.includes(idx));
+    if (saving) return;
+    setSaving(true);
+    const toastId = toast.loading(`Saving ${leadsToSave.length} leads...`);
+
+    try {
+      const response = await api.post('/leads/bulk', { leads: leadsToSave });
+      if (response.data.success) {
+        toast.success(`✅ Saved ${response.data.saved || leadsToSave.length} leads!`, { id: toastId });
+        setExtracted(extracted.filter((_, idx) => !selected.includes(idx)));
+        setSelected([]);
+      } else {
+        toast.error(response.data.error || 'Failed to save leads', { id: toastId });
+      }
+    } catch (error) {
+      toast.error('Failed to save leads', { id: toastId });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteSelected = () => {
+    if (selected.length === 0) {
+      toast.error('No leads selected');
+      return;
+    }
+    const newResults = extracted.filter((_, idx) => !selected.includes(idx));
+    setExtracted(newResults);
+    setSelected([]);
+    toast.success(`${selected.length} emails removed from results`);
+  };
+
+  const exportCSV = () => {
+    if (filteredResults.length === 0) {
+      toast.error('No data to export');
+      return;
+    }
+
+    const headers = ['Email', 'Phone', 'Source', 'Verified'];
+    const rows = filteredResults.map(e => [e.email, e.phone || '', e.source, e.verified ? 'Yes' : 'No']);
+    let csvContent = headers.join(',') + '\n';
+    rows.forEach(row => {
+      const escaped = row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',');
+      csvContent += escaped + '\n';
+    });
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `domain_insights_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exported');
   };
 
   const exportExcel = () => {
-    if (!filteredLeads.length) return toast.error('No data');
-    const data = filteredLeads.map(l => ({ Email: l.email, Verified: l.verified ? 'Yes' : 'No', Phone: l.phone || '', Source: l.source }));
+    if (filteredResults.length === 0) {
+      toast.error('No data to export');
+      return;
+    }
+
+    const data = filteredResults.map(e => ({
+      Email: e.email,
+      Phone: e.phone || '',
+      Source: e.source,
+      Verified: e.verified ? 'Yes' : 'No'
+    }));
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Emails');
-    XLSX.writeFile(wb, `emails_${Date.now()}.xlsx`);
-    toast.success('Exported');
-  };
-
-  const saveToLeads = async () => {
-    if (!filteredLeads.length) return toast.error('No leads to save');
-    setLoading(true);
-    try {
-      await api.post('/email/save-leads', { leads: filteredLeads });
-      toast.success(`Saved ${filteredLeads.length} leads`);
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Save failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const openSendModal = () => {
-    if (selectedEmails.length === 0) return toast.error('Select emails');
-    if (selectedEmails.length > 50) return toast.error('Max 50 recipients');
-    setShowSendModal(true);
-  };
-
-  const sendEmails = async () => {
-    if (!emailSubject || !emailMessage) return toast.error('Subject & message required');
-    setLoading(true);
-    try {
-      await api.post('/email/bulk-send', { recipients: selectedEmails, subject: emailSubject, message: emailMessage });
-      toast.success(`Sent to ${selectedEmails.length}`);
-      setShowSendModal(false);
-      setEmailSubject('');
-      setEmailMessage('');
-      setSelectedEmails([]);
-      setSelectAll(false);
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Send failed');
-    } finally {
-      setLoading(false);
-    }
+    XLSX.utils.book_append_sheet(wb, ws, 'DomainInsights');
+    XLSX.writeFile(wb, `domain_insights_${Date.now()}.xlsx`);
+    toast.success('Excel exported');
   };
 
   const toggleSelectAll = () => {
-    if (selectAll) setSelectedEmails([]);
-    else setSelectedEmails(filteredLeads.map(l => l.email));
-    setSelectAll(!selectAll);
+    if (selected.length === filteredResults.length) {
+      setSelected([]);
+    } else {
+      setSelected(filteredResults.map((_, idx) => idx));
+    }
   };
 
-  const toggleSelect = (email) => {
-    if (selectedEmails.includes(email)) setSelectedEmails(selectedEmails.filter(e => e !== email));
-    else setSelectedEmails([...selectedEmails, email]);
+  const toggleSelect = (idx) => {
+    if (selected.includes(idx)) {
+      setSelected(selected.filter(i => i !== idx));
+    } else {
+      setSelected([...selected, idx]);
+    }
   };
 
-  const clearAll = () => {
-    setExtractedLeads([]);
-    setFilteredLeads([]);
-    setSelectedEmails([]);
-    setSelectAll(false);
-    setFilterVerified(false);
-    setFilterDomain('');
-    toast.success('Cleared');
-  };
+  const filteredResults = extracted.filter(e => {
+    if (filterVerified && !e.verified) return false;
+    if (filterDomain && !e.email.endsWith('@' + filterDomain)) return false;
+    return true;
+  });
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">Email Extractor & Campaign</h1>
-      <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><label className="block text-sm font-medium text-gray-700">Single URL</label><input type="text" value={singleUrl} onChange={e => setSingleUrl(e.target.value)} placeholder="https://example.com" className="w-full border rounded-xl p-2" /></div>
-          <div><label className="block text-sm font-medium text-gray-700">Bulk URLs (one per line)</label><textarea rows="3" value={bulkUrls} onChange={e => setBulkUrls(e.target.value)} placeholder="https://site1.com\nhttps://site2.com" className="w-full border rounded-xl p-2" /></div>
+      <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
+        Domain Insights
+      </h1>
+
+      <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Single URL</label>
+            <input type="text" placeholder="https://example.com" value={singleUrl} onChange={e => setSingleUrl(e.target.value)} className="w-full border rounded-xl p-2" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Bulk URLs (one per line)</label>
+            <textarea rows="3" placeholder="https://site1.com\nhttps://site2.com" value={bulkUrls} onChange={e => setBulkUrls(e.target.value)} className="w-full border rounded-xl p-2" />
+          </div>
         </div>
         <div className="flex flex-wrap gap-4 mt-4 items-center">
-          <label className="flex items-center gap-2"><input type="checkbox" checked={deep} onChange={e => setDeep(e.target.checked)} /> Deep crawl (max {maxPages} pages)</label>
-          <input type="number" min="1" max="50" value={maxPages} onChange={e => setMaxPages(parseInt(e.target.value))} className="border rounded p-1 w-20" />
-          <button onClick={handleExtract} disabled={loading} className="bg-indigo-600 text-white px-6 py-2 rounded-xl disabled:opacity-50">{loading ? 'Extracting...' : 'Extract Emails'}</button>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={deep} onChange={e => setDeep(e.target.checked)} />
+            Deep crawl (max {maxPages} pages)
+          </label>
+          <input type="number" min="1" max="20" value={maxPages} onChange={e => setMaxPages(parseInt(e.target.value))} className="border rounded p-1 w-20" />
+          <button onClick={handleExtract} disabled={loading} className="bg-indigo-600 text-white px-6 py-2 rounded-xl flex items-center gap-2 disabled:opacity-50">
+            {loading ? '⏳ Extracting...' : <><FaSearch /> Extract Emails & Phones</>}
+          </button>
         </div>
       </div>
-      {extractedLeads.length > 0 && (
-        <div className="bg-white rounded-xl shadow p-4 mb-6">
-          <div className="flex flex-wrap gap-4 items-center">
-            <label className="flex items-center gap-2"><input type="checkbox" checked={filterVerified} onChange={e => { setFilterVerified(e.target.checked); setTimeout(applyFilters, 0); }} /> Verified only</label>
-            <input type="text" placeholder="Filter by domain (e.g., gmail.com)" value={filterDomain} onChange={e => { setFilterDomain(e.target.value); setTimeout(applyFilters, 0); }} className="border rounded p-1" />
-            <button onClick={applyFilters} className="bg-gray-600 text-white px-3 py-1 rounded">Apply Filters</button>
-            <button onClick={exportExcel} className="bg-green-600 text-white px-3 py-1 rounded">📊 Export Excel</button>
-            <button onClick={saveToLeads} className="bg-blue-600 text-white px-3 py-1 rounded">💾 Save to Leads</button>
-            <button onClick={openSendModal} className="bg-red-600 text-white px-3 py-1 rounded">✉️ Bulk Email ({selectedEmails.length})</button>
-            <button onClick={clearAll} className="text-gray-500">Clear all</button>
-          </div>
-          <div className="mt-3 text-sm text-gray-500">{filteredLeads.length} emails shown (total {extractedLeads.length})</div>
+
+      {extracted.length > 0 && (
+        <div className="bg-white p-4 rounded-xl shadow mb-6 flex flex-wrap gap-4 items-center">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={filterVerified} onChange={e => setFilterVerified(e.target.checked)} />
+            Verified only
+          </label>
+          <input type="text" placeholder="Filter by domain (e.g., gmail.com)" value={filterDomain} onChange={e => setFilterDomain(e.target.value)} className="border rounded-lg p-2 flex-1 min-w-[200px]" />
+          <span className="text-sm text-gray-500">{filteredResults.length} shown / {extracted.length} total</span>
         </div>
       )}
-      {filteredLeads.length > 0 && (
+
+      {extracted.length > 0 && (
+        <div className="bg-white rounded-xl shadow p-3 mb-6 flex flex-wrap items-center justify-between">
+          <div className="flex flex-wrap gap-2 items-center">
+            <button onClick={toggleSelectAll} className="bg-gray-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm">
+              <FaCheckSquare size={18} /> Select All
+            </button>
+            <button onClick={saveSelected} disabled={saving} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm">
+              <FaSave size={18} /> {saving ? 'Saving...' : 'Save Selected'}
+            </button>
+            <button onClick={deleteSelected} className="bg-red-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm">
+              <FaTrash size={18} /> Delete
+            </button>
+            <button onClick={exportCSV} className="bg-gray-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm">
+              <FaFileCsv size={18} /> CSV
+            </button>
+            <button onClick={exportExcel} className="bg-green-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm">
+              <FaFileExcel size={18} /> Excel
+            </button>
+          </div>
+          <span className="text-sm font-medium">{selected.length} selected / {filteredResults.length} total</span>
+        </div>
+      )}
+
+      {filteredResults.length > 0 && (
         <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="bg-gray-100"><tr><th className="p-3"><input type="checkbox" checked={selectAll} onChange={toggleSelectAll} /></th><th className="text-left p-3">Email</th><th className="p-3">Verified</th><th className="p-3">Phone</th><th className="p-3">Source URL</th></tr></thead>
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="p-3 w-10"><button onClick={toggleSelectAll}>{selected.length === filteredResults.length ? <FaCheckSquare size={16} /> : <FaSquare size={16} />}</button></th>
+                <th className="text-left">Email</th>
+                <th>Phone</th>
+                <th>Source</th>
+                <th>Verified</th>
+              </tr>
+            </thead>
             <tbody>
-              {filteredLeads.map((lead, idx) => (
-                <tr key={idx} className="border-t"><td className="p-3"><input type="checkbox" checked={selectedEmails.includes(lead.email)} onChange={() => toggleSelect(lead.email)} /></td><td className="p-3">{lead.email}</td><td className="p-3">{lead.verified ? '✅ Yes' : '❌ No'}</td><td className="p-3">{lead.phone || '-'}</td><td className="p-3 truncate max-w-xs">{lead.source}</td></tr>
-              ))}
+              {filteredResults.map((lead, idx) => {
+                const actualIdx = extracted.indexOf(lead);
+                return (
+                  <tr key={idx} className="border-t hover:bg-gray-50">
+                    <td className="p-3 text-center">
+                      <input type="checkbox" checked={selected.includes(actualIdx)} onChange={() => toggleSelect(actualIdx)} className="w-4 h-4" />
+                    </td>
+                    <td className="p-3 font-medium break-all">{lead.email}</td>
+                    <td className="p-3">{lead.phone || '-'}</td>
+                    <td className="p-3 max-w-xs truncate">{lead.source}</td>
+                    <td className="p-3">{lead.verified ? '✅ Yes' : '❌ No'}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
-        </div>
-      )}
-      {showSendModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl">
-            <h2 className="text-2xl font-bold mb-4">Send to {selectedEmails.length} recipient(s)</h2>
-            <input type="text" placeholder="Subject" value={emailSubject} onChange={e => setEmailSubject(e.target.value)} className="w-full border rounded-xl p-2 mb-3" />
-            <textarea rows="6" placeholder="Message (HTML allowed)" value={emailMessage} onChange={e => setEmailMessage(e.target.value)} className="w-full border rounded-xl p-2 mb-3" />
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setShowSendModal(false)} className="bg-gray-300 px-4 py-2 rounded">Cancel</button>
-              <button onClick={sendEmails} className="bg-red-600 text-white px-4 py-2 rounded">Send Now</button>
-            </div>
-          </div>
         </div>
       )}
     </div>
   );
 };
 
-export default EmailExtractor;
+export default DomainInsights;
