@@ -194,6 +194,7 @@ const CampaignOutreach = () => {
           <button onClick={saveAllLeads} disabled={saving} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm">
             <FaSave size={18} /> {saving ? 'Saving...' : 'Save All'}
           </button>
+          {/* ✅ COPY SELECTED URLS BUTTON */}
           <button onClick={copySelectedUrls} className="bg-cyan-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm">
             <FaCopy size={18} /> Copy URLs
           </button>
