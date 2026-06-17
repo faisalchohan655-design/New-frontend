@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Map, Users, Settings, ChevronLeft, ChevronRight, Zap, Facebook, Mail, Globe, MessageCircle, Briefcase } from 'lucide-react';
+import { LayoutDashboard, Map, Users, Settings, ChevronLeft, ChevronRight, Zap, Mail, Globe, MessageCircle, Briefcase, Share2 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
 const Sidebar = () => {
@@ -8,7 +8,7 @@ const Sidebar = () => {
   const items = [
     { path: '/dashboard', name: 'Dashboard', icon: LayoutDashboard },
     { path: '/local-business-insights', name: 'Local Business Insights', icon: Map },
-    { path: '/social-insights', name: 'Social Insights', icon: Facebook },
+    { path: '/social-insights', name: 'Social Insights', icon: Share2 },
     { path: '/domain-insights', name: 'Domain Insights', icon: Mail },
     { path: '/website-intelligence', name: 'Website Intelligence', icon: Globe },
     { path: '/campaign-outreach', name: 'Campaign Outreach', icon: MessageCircle },
